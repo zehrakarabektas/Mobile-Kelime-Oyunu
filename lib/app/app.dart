@@ -7,6 +7,7 @@ import 'package:stacked_services/stacked_services.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/login/login_view.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/register/register_view.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/gamehome/gamehome_view.dart';
+import 'package:yazlab2proje2kelimeoyunumobil/ui/views/new_game/new_game_view.dart';
 // @stacked-import
 
 @StackedApp(
@@ -16,6 +17,7 @@ import 'package:yazlab2proje2kelimeoyunumobil/ui/views/gamehome/gamehome_view.da
     MaterialRoute(page: LoginView),
     MaterialRoute(page: RegisterView),
     MaterialRoute(page: GamehomeView),
+    MaterialRoute(page: NewGameView),
 // @stacked-route
   ],
   dependencies: [

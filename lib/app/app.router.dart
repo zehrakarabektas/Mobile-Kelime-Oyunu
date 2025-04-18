@@ -5,16 +5,18 @@
 // **************************************************************************
 
 // ignore_for_file: no_leading_underscores_for_library_prefixes
-import 'package:flutter/material.dart' as _i7;
+import 'package:flutter/material.dart' as _i8;
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart' as _i1;
-import 'package:stacked_services/stacked_services.dart' as _i8;
+import 'package:stacked_services/stacked_services.dart' as _i9;
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/gamehome/gamehome_view.dart'
     as _i6;
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/home/home_view.dart'
     as _i2;
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/login/login_view.dart'
     as _i4;
+import 'package:yazlab2proje2kelimeoyunumobil/ui/views/new_game/new_game_view.dart'
+    as _i7;
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/register/register_view.dart'
     as _i5;
 import 'package:yazlab2proje2kelimeoyunumobil/ui/views/startup/startup_view.dart'
@@ -31,12 +33,15 @@ class Routes {
 
   static const gamehomeView = '/gamehome-view';
 
+  static const newGameView = '/new-game-view';
+
   static const all = <String>{
     homeView,
     startupView,
     loginView,
     registerView,
     gamehomeView,
+    newGameView,
   };
 }
 
@@ -62,36 +67,46 @@ class StackedRouter extends _i1.RouterBase {
       Routes.gamehomeView,
       page: _i6.GamehomeView,
     ),
+    _i1.RouteDef(
+      Routes.newGameView,
+      page: _i7.NewGameView,
+    ),
   ];
 
   final _pagesMap = <Type, _i1.StackedRouteFactory>{
     _i2.HomeView: (data) {
-      return _i7.MaterialPageRoute<dynamic>(
+      return _i8.MaterialPageRoute<dynamic>(
         builder: (context) => const _i2.HomeView(),
         settings: data,
       );
     },
     _i3.StartupView: (data) {
-      return _i7.MaterialPageRoute<dynamic>(
+      return _i8.MaterialPageRoute<dynamic>(
         builder: (context) => const _i3.StartupView(),
         settings: data,
       );
     },
     _i4.LoginView: (data) {
-      return _i7.MaterialPageRoute<dynamic>(
+      return _i8.MaterialPageRoute<dynamic>(
         builder: (context) => const _i4.LoginView(),
         settings: data,
       );
     },
     _i5.RegisterView: (data) {
-      return _i7.MaterialPageRoute<dynamic>(
+      return _i8.MaterialPageRoute<dynamic>(
         builder: (context) => const _i5.RegisterView(),
         settings: data,
       );
     },
     _i6.GamehomeView: (data) {
-      return _i7.MaterialPageRoute<dynamic>(
+      return _i8.MaterialPageRoute<dynamic>(
         builder: (context) => const _i6.GamehomeView(),
+        settings: data,
+      );
+    },
+    _i7.NewGameView: (data) {
+      return _i8.MaterialPageRoute<dynamic>(
+        builder: (context) => const _i7.NewGameView(),
         settings: data,
       );
     },
@@ -104,7 +119,7 @@ class StackedRouter extends _i1.RouterBase {
   Map<Type, _i1.StackedRouteFactory> get pagesMap => _pagesMap;
 }
 
-extension NavigatorStateExtension on _i8.NavigationService {
+extension NavigatorStateExtension on _i9.NavigationService {
   Future<dynamic> navigateToHomeView([
     int? routerId,
     bool preventDuplicates = true,
@@ -175,6 +190,20 @@ extension NavigatorStateExtension on _i8.NavigationService {
         transition: transition);
   }
 
+  Future<dynamic> navigateToNewGameView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return navigateTo<dynamic>(Routes.newGameView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
   Future<dynamic> replaceWithHomeView([
     int? routerId,
     bool preventDuplicates = true,
@@ -239,6 +268,20 @@ extension NavigatorStateExtension on _i8.NavigationService {
         transition,
   ]) async {
     return replaceWith<dynamic>(Routes.gamehomeView,
+        id: routerId,
+        preventDuplicates: preventDuplicates,
+        parameters: parameters,
+        transition: transition);
+  }
+
+  Future<dynamic> replaceWithNewGameView([
+    int? routerId,
+    bool preventDuplicates = true,
+    Map<String, String>? parameters,
+    Widget Function(BuildContext, Animation<double>, Animation<double>, Widget)?
+        transition,
+  ]) async {
+    return replaceWith<dynamic>(Routes.newGameView,
         id: routerId,
         preventDuplicates: preventDuplicates,
         parameters: parameters,

@@ -1,0 +1,11 @@
+import 'package:flutter_test/flutter_test.dart';
+import 'package:yazlab2proje2kelimeoyunumobil/app/app.locator.dart';
+
+import '../helpers/test_helpers.dart';
+
+void main() {
+  group('BaseviewViewModel Tests -', () {
+    setUp(() => registerServices());
+    tearDown(() => locator.reset());
+  });
+}
