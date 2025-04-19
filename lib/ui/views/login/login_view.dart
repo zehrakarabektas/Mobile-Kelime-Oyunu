@@ -36,7 +36,7 @@ class LoginView extends StackedView<LoginViewModel> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  _inputField("E-posta", false, viewModel.updateEmail),
+                  _inputField("Kullanıcı Adı", false, viewModel.updateEmail),
                   const SizedBox(height: 16),
                   _inputField("Şifre", true, viewModel.updatePassword),
                   const SizedBox(height: 24),

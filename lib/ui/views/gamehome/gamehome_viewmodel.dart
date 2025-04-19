@@ -36,5 +36,4 @@ class GamehomeViewModel extends BaseViewModel {
   void logout() {
     debugPrint("Kullanıcı çıkış yaptı.");
   }
-  
 }
