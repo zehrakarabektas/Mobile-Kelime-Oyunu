@@ -16,8 +16,7 @@ class GamehomeViewModel extends BaseViewModel {
   }
 
   void goToActiveGames() {
-    // yönlendirme yapılacak (örnek)
-    // _navigationService.navigateToActiveGamesView();
+    _navigationService.replaceWithActiveGameView();
   }
 
   void goToFinishedGames() {
