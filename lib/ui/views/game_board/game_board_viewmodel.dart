@@ -18,6 +18,8 @@ class Cell {
 class GameBoardViewModel extends BaseViewModel {
   final int boardSize = 15;
   late List<List<Cell>> board;
+  List<int> usedLetterIndexes = [];
+  List<String> letters = ['A', 'I', 'İ', 'L', 'T', 'R', 'N'];
   final Map<String, int> letterPoints = {
     'A': 1,
     'B': 3,
@@ -118,5 +120,10 @@ class GameBoardViewModel extends BaseViewModel {
 
   int getLetterPoint(String letter) {
     return letterPoints[letter.toUpperCase()] ?? 0;
+  }
+
+  void resetUsedLetters() {
+    usedLetterIndexes.clear();
+    notifyListeners();
   }
 }
