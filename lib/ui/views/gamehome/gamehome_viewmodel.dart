@@ -20,8 +20,7 @@ class GamehomeViewModel extends BaseViewModel {
   }
 
   void goToFinishedGames() {
-    // yönlendirme yapılacak (örnek)
-    // _navigationService.navigateToFinishedGamesView();
+    _navigationService.replaceWithCompleteGameView();
   }
 
   void selectGameDuration(BuildContext context) {

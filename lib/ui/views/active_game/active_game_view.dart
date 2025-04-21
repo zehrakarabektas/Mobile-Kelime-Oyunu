@@ -1,8 +1,7 @@
-import 'dart:ui'; // For ImageFilter
-
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'active_game_viewmodel.dart';
+import 'dart:ui';
 
 class ActiveGameView extends StackedView<ActiveGameViewModel> {
   const ActiveGameView({super.key});
@@ -16,7 +15,6 @@ class ActiveGameView extends StackedView<ActiveGameViewModel> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background image
           Positioned.fill(
             child: Image.asset(
               'lib/assets/images/aktifOyunlarArkaPlan.png',
@@ -52,12 +50,13 @@ class ActiveGameView extends StackedView<ActiveGameViewModel> {
                                     ),
                                     child: ListTile(
                                       leading: CircleAvatar(
-                                        backgroundColor: const Color(0xFF2C1655), 
+                                        backgroundColor:
+                                            const Color(0xFF2C1655),
                                         child: Text(
-                                          oyun.rakipAdi[0], 
+                                          oyun.rakipAdi[0],
                                           style: const TextStyle(
-                                            color: Colors.white, 
-                                            fontWeight: FontWeight.bold, 
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
                                           ),
                                         ),
                                       ),
@@ -76,8 +75,9 @@ class ActiveGameView extends StackedView<ActiveGameViewModel> {
                                             ? Icons.play_arrow
                                             : Icons.hourglass_empty,
                                         color: oyun.siraKimde
-                                            ? const Color.fromARGB(255, 45, 115, 47)
-                                            : const Color.fromARGB(255, 239, 81, 28),
+                                            ? const Color.fromARGB(
+                                                255, 45, 115, 47)
+                                            : const Color.fromARGB(255, 248, 3, 3),
                                         size: 45,
                                       ),
                                     ),
