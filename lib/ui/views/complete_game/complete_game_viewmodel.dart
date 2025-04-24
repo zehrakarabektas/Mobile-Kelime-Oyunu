@@ -1,24 +1,63 @@
 import 'package:stacked/stacked.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import '../../../app/app.locator.dart';
+import '../../../services/user_service.dart';
+import 'package:signalr_core/signalr_core.dart';
 
 class Oyun {
   final String rakipAdi;
   final int kendiPuani;
   final int rakipPuani;
+  final DateTime tarih;
 
-  Oyun({
-    required this.rakipAdi,
-    required this.kendiPuani,
-    required this.rakipPuani,
-  });
+  Oyun(
+      {required this.rakipAdi,
+      required this.kendiPuani,
+      required this.rakipPuani,
+      required this.tarih});
+  factory Oyun.fromJson(Map<String, dynamic> json) {
+    return Oyun(
+      rakipAdi: json["rivalName"],
+      kendiPuani: json["yourScore"],
+      rakipPuani: json["rivalScore"],
+      tarih: DateTime.parse(json["gameDate"]),
+    );
+  }
 }
 
 class CompleteGameViewModel extends BaseViewModel {
-  final List<Oyun> bitenOyunlar = [
-    Oyun(rakipAdi: "Ahmet", kendiPuani: 85, rakipPuani: 70),
-    Oyun(rakipAdi: "Zeynep", kendiPuani: 64, rakipPuani: 64),
-    Oyun(rakipAdi: "Burak", kendiPuani: 55, rakipPuani: 78),
-    Oyun(rakipAdi: "Elif", kendiPuani: 95, rakipPuani: 80),
-    Oyun(rakipAdi: "Kemal", kendiPuani: 60, rakipPuani: 90),
-  ];
+  final _userService = locator<UserService>();
+  List<Oyun> bitenOyunlar = [];
+  late HubConnection _hubConnect;
 
+  Future<void> initSignalR() async {
+    _hubConnect = HubConnectionBuilder()
+        .withUrl('http://192.168.1.178:7109/wordgamehub')
+        .build();
+
+    _hubConnect.on("DataChanged", (args) {
+      fetchCompletedGames();
+    });
+    await _hubConnect.start();
+  }
+
+  Future<void> fetchCompletedGames() async {
+    final userId = _userService.userId;
+    final url = Uri.parse(
+        "http://192.168.1.178:7109/api/GameList/completed-games/$userId");
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        bitenOyunlar = List<Oyun>.from(data.map((json) => Oyun.fromJson(json)));
+      } else {
+        print("Hata: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      print("API hatası: $e");
+    }
+    notifyListeners();
+  }
 }

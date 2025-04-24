@@ -1,18 +1,18 @@
 import 'package:stacked/stacked.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class RegisterViewModel extends BaseViewModel {
   String username = '';
   String email = '';
   String password = '';
-  String checkPassword = '';
   String message = '';
 
   void updateUsername(String value) => username = value;
   void updateEmail(String value) => email = value;
   void updatePassword(String value) => password = value;
-  void updateCheckPassword(String value) => checkPassword = value;
 
-  void register() {
+  void register() async {
     if (username.isEmpty) {
       message = "Lütfen bir kullanıcı adı girin.";
     } else if (!_isValidEmail(email)) {
@@ -21,7 +21,32 @@ class RegisterViewModel extends BaseViewModel {
       message =
           "Şifre en az 8 karakter olmalı, büyük harf, küçük harf ve rakam içermeli.";
     } else {
-      message = "Kayıt başarılı ";
+      try {
+        final url =
+            Uri.parse("http://192.168.1.178:7109/api/Authentication/register");
+        final response = await http.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: json.encode({
+            "userName": username,
+            "userEmail": email,
+            "password": password,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          message = "Kayıt başarılı!";
+        } else {
+          try {
+            final responseData = json.decode(response.body);
+            message = "Hata: ${responseData.toString()}";
+          } catch (e) {
+            message = response.body;
+          }
+        }
+      } catch (e) {
+        message = "Sunucuya bağlanılamadı: $e";
+      }
     }
 
     notifyListeners();
@@ -33,8 +58,7 @@ class RegisterViewModel extends BaseViewModel {
   }
 
   bool _isValidPassword(String password) {
-    final passwordRegex =
-        RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$');
+    final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$');
     return passwordRegex.hasMatch(password);
   }
 }
