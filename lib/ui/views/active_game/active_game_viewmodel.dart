@@ -1,5 +1,5 @@
 import 'package:stacked/stacked.dart';
-import 'package:signalr_core/signalr_core.dart';
+import 'package:signalr_netcore/signalr_client.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../app/app.locator.dart';

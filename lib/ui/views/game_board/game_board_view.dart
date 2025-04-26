@@ -40,8 +40,9 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                     final cell = viewModel.board[row][col];
 
                     return DragTarget<String>(
-                      onAccept: (data) {
-                        final parts = data.split(':');
+                      onAcceptWithDetails: (data) {
+                        final parts = data.data.split(':'); 
+
                         final letter = parts[0];
 
                         if (parts[1].contains('_')) {
@@ -87,7 +88,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                               if (cell.letter.isNotEmpty)
                                 Positioned.fill(
                                   child: Draggable<String>(
-                                    data: '${cell.letter}:${row}_${col}',
+                                    data: '${cell.letter}:${row}_$col',
                                     feedback: Material(
                                       color: Colors.transparent,
                                       child: SizedBox(
@@ -509,12 +510,12 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
           end: Alignment.bottomRight,
           stops: [0.0, 0.35, 0.7, 1.0],
         ),
-        border: Border.all(color: Color(0xFF5C3B26), width: 1.2),
+        border: Border.all(color: const Color(0xFF5C3B26), width: 1.2),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.2),
               blurRadius: 4,
-              offset: Offset(2, 2))
+              offset: const Offset(2, 2))
         ],
       ),
       child: Stack(
