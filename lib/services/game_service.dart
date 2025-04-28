@@ -1,7 +1,7 @@
 import 'package:stacked/stacked.dart';
 
 class GameService with ListenableServiceMixin {
-  int? gameId;
+  String? gameId;
   int? gamer1Id;
   int? gamer2Id;
   String? gamer1Name;
@@ -14,14 +14,14 @@ class GameService with ListenableServiceMixin {
   int gamer2Score = 0;
   int gamer1PassCount = 0;
   int gamer2PassCount = 0;
+  int gameLetterCount = 86;
   DateTime? startTime;
   DateTime? lastMoveTime;
   int? winnerGamerId;
   bool isDraw = false;
 
-  // Oyun verisini setlemek için sade ve net bir metod
   void setGame({
-    required int gameId,
+    required String gameId,
     required int gamer1Id,
     required int gamer2Id,
     required String gamer1Name,
@@ -32,6 +32,7 @@ class GameService with ListenableServiceMixin {
     required int gamer2Score,
     required int gamer1PassCount,
     required int gamer2PassCount,
+    required int gameLetterCount,
     required DateTime startTime,
     required DateTime lastMoveTime,
     int? winnerGamerId,
@@ -48,18 +49,18 @@ class GameService with ListenableServiceMixin {
     this.gamer2Score = gamer2Score;
     this.gamer1PassCount = gamer1PassCount;
     this.gamer2PassCount = gamer2PassCount;
+    this.gameLetterCount = gameLetterCount;
     this.startTime = startTime;
     this.lastMoveTime = lastMoveTime;
     this.winnerGamerId = winnerGamerId;
     this.isDraw = isDraw;
 
-    notifyListeners(); // unutma! değişim olunca UI'yı tetikle
+    notifyListeners();
   }
 
-  // JSON'dan dolum için (istersen bunu koruyabiliriz)
   void setFromMap(Map<String, dynamic> game) {
     setGame(
-      gameId: game['gameId'],
+      gameId: game['gameId'].toString(),
       gamer1Id: game['gamer1Id'],
       gamer2Id: game['gamer2Id'],
       gamer1Name: game['gamer1Name'],
@@ -70,6 +71,7 @@ class GameService with ListenableServiceMixin {
       gamer2Score: game['gamer2Score'] ?? 0,
       gamer1PassCount: game['gamer1PassCount'] ?? 0,
       gamer2PassCount: game['gamer2PassCount'] ?? 0,
+      gameLetterCount: game['gameLetterCount'] ?? 86,
       startTime: DateTime.tryParse(game['startTime'] ?? "") ?? DateTime.now(),
       lastMoveTime:
           DateTime.tryParse(game['lastMoveTime'] ?? "") ?? DateTime.now(),
@@ -90,8 +92,9 @@ class GameService with ListenableServiceMixin {
     gameSeconds = 0;
     gamer1Score = 0;
     gamer2Score = 0;
-    gamer1PassCount = 0;
-    gamer2PassCount = 0;
+    gameLetterCount = 100;
+    gamer1PassCount = 2;
+    gamer2PassCount = 2;
     startTime = null;
     lastMoveTime = null;
     winnerGamerId = null;

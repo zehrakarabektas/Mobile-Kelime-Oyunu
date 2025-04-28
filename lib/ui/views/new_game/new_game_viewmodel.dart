@@ -1,15 +1,15 @@
 import 'dart:async';
-
-import 'package:stacked/stacked.dart';
 import 'package:flutter/material.dart';
+import 'package:stacked/stacked.dart';
 import 'package:stacked_services/stacked_services.dart';
-import 'package:yazlab2proje2kelimeoyunumobil/services/game_service.dart';
-import '../../../app/app.locator.dart';
-import '../../../app/app.router.dart';
-import '../../../services/user_service.dart';
 import 'package:http/http.dart' as http;
 import 'package:signalr_netcore/signalr_client.dart';
 import 'dart:convert';
+
+import '../../../app/app.locator.dart';
+import '../../../app/app.router.dart';
+import '../../../services/game_service.dart';
+import '../../../services/user_service.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/ui/dialogs/info_alert/waiting_game_start.dart';
 
 class NewGameViewModel extends BaseViewModel {
@@ -32,7 +32,8 @@ class NewGameViewModel extends BaseViewModel {
     await startSignalR();
 
     final response = await http.post(
-      Uri.parse('http://10.0.2.2:7109/api/GameStart/oyun-eslesmesi-bul'),
+      Uri.parse(
+          'http://192.168.1.178:7109/api/GameStart/oyun-eslesmesi-bul'), // BURASI: kendi bilgisayar IP'n olacak
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         "userID": _userService.userId,
@@ -46,8 +47,9 @@ class NewGameViewModel extends BaseViewModel {
       final matched = data['matched'] as bool;
 
       if (matched) {
-        debugPrint("API matched true! Ekranı açıyorum.");
-        _navigationService.replaceWithGameBoardView();
+        debugPrint(
+            "API matched true! Şu anda SignalR 'Matched' eventi bekleniyor...");
+        // EKRAN açmıyoruz burada! SignalR Matched eventinde açacağız.
       } else {
         debugPrint("API matched false. Beklemeye geçiyorum...");
         await showWaitingDialog(context, gameType);
@@ -60,25 +62,27 @@ class NewGameViewModel extends BaseViewModel {
   }
 
   Future<void> startSignalR() async {
-    final userName = _userService.userName;
+    final userName = _userService.userName ?? "Unknown";
 
     _hubConnection = HubConnectionBuilder()
         .withUrl(
-            'http://10.0.2.2:7109/gamematchhub?userName=$userName&userId=${_userService.userId}')
+          'http://192.168.1.178:7109/gamematchhub?userName=$userName&userId=${_userService.userId}',
+        )
         .build();
 
     _hubConnection.on('Matched', (args) async {
       if (!dialogClosed) {
         debugPrint("SignalR Matched geldi! Modal kapatılıyor.");
+
         final fullJson = args![0] as Map<String, dynamic>;
         final gameJson = fullJson['game'] as Map<String, dynamic>;
 
         final _gameService = locator<GameService>();
         _gameService.setFromMap(gameJson);
+
         WidgetsBinding.instance.addPostFrameCallback((_) {
           final navContext =
               locator<NavigationService>().navigatorKey!.currentContext!;
-
           Navigator.of(navContext, rootNavigator: true).pop();
 
           ScaffoldMessenger.of(navContext).showSnackBar(
@@ -119,7 +123,7 @@ class NewGameViewModel extends BaseViewModel {
           if (!dialogClosed) {
             await http.post(
               Uri.parse(
-                  'http://10.0.2.2:7109/api/GameStart/oyun-eslesmesi-ayril'),
+                  'http://192.168.1.178:7109/api/GameStart/oyun-eslesmesi-ayril'),
               headers: {'Content-Type': 'application/json'},
               body: jsonEncode({
                 "userID": _userService.userId,

@@ -124,7 +124,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
             const SizedBox(height: 24),
             buildLetterBar(viewModel),
             const SizedBox(height: 24),
-            buildControlBar(),
+            buildControlBar(viewModel),
             const SizedBox(height: 6),
           ],
         ),
@@ -140,8 +140,8 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
   @override
   void onViewModelReady(GameBoardViewModel viewModel) {
     viewModel.initializeBoard();
-    viewModel
-        .fetchGamerLetters(); // Kullanıcıya atanan harfleri çekme fonksiyonu
+    viewModel.fetchGamerLetters();
+    viewModel.initSignalR();
   }
 
   Widget buildTopBar(GameBoardViewModel viewModel) {
@@ -174,7 +174,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                     color: Colors.white, shape: BoxShape.circle),
                 alignment: Alignment.center,
                 child: Text(
-                  (viewModel.boardSize * viewModel.boardSize).toString(),
+                  (viewModel.gameLetterCount).toString(),
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
@@ -395,19 +395,44 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
     );
   }
 
-  Widget buildControlBar() {
+  Widget buildControlBar(GameBoardViewModel viewModel) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20, left: 12, right: 12),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          buildGameButton(Icons.undo, "Geri Al", Colors.blueGrey),
-          buildGameButton(Icons.flag, "Teslim Ol", Colors.amber.shade400),
-          buildGameButton(Icons.refresh, "Pas", Colors.deepOrangeAccent,
-              badgeCount: 2),
+          buildGameButton(
+            Icons.undo,
+            "Geri Al",
+            Colors.blueGrey,
+            onPressed: () {
+              debugPrint("Geri Al butonuna tıklandı");
+            },
+          ),
+
+          buildGameButton(
+            Icons.refresh,
+            "Pas",
+            Colors.deepOrangeAccent,
+            badgeCount: viewModel.usersPassCount,
+            badgeCountPassbutton: true,
+            onPressed: () {
+              viewModel.userPassTurn();
+            },
+          ),
+          buildGameButton(
+            Icons.flag,
+            "Teslim Ol",
+            Colors.amber.shade400,
+            onPressed: () {
+              debugPrint("Teslim Ol butonuna tıklandı");
+              viewModel.userSurrender();
+            },
+          ),
+
           ElevatedButton(
             onPressed: () {
-              // Gönderme işlemi
+              // Gönderme işlemi (kelime gönderilecek)
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green.shade500,
@@ -440,9 +465,11 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
               ],
             ),
           ),
+
+          // Çıkış butonu (normal ElevatedButton)
           ElevatedButton(
             onPressed: () {
-              // çıkış işlemi
+              // Çıkış işlemi
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade400,
@@ -474,12 +501,14 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
   }
 
   Widget buildGameButton(IconData icon, String label, Color color,
-      {int? badgeCount}) {
+      {int? badgeCount,
+      required VoidCallback onPressed,
+      bool badgeCountPassbutton = false}) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
         ElevatedButton(
-          onPressed: () {},
+          onPressed: onPressed,
           style: ElevatedButton.styleFrom(
             backgroundColor: color,
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -502,7 +531,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
             ],
           ),
         ),
-        if (badgeCount != null && badgeCount > 0)
+        if (badgeCount != null && badgeCount > 0 || badgeCountPassbutton)
           Positioned(
             right: 0,
             top: -6,

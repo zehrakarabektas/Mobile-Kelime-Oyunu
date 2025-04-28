@@ -40,7 +40,7 @@ class LoginViewModel extends BaseViewModel {
         final userData = json.decode(response.body);
 
         _userService.setUser(
-          id: userData["userID"].toString(),
+          id: userData["userID"],
           name: userData["userName"],
           mail: userData["userEmail"],
           success: (userData["successRate"] ?? 0).toDouble(),

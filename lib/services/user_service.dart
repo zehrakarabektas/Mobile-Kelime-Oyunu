@@ -1,5 +1,5 @@
 class UserService {
-  String? userId;
+  int? userId;
   String? userName;
   String? email;
   double successRate = 0;
@@ -7,7 +7,7 @@ class UserService {
   bool get isLoggedIn => userId != null;
 
   void setUser({
-    required String id,
+    required int id,
     required String name,
     required String mail,
     double? success,
