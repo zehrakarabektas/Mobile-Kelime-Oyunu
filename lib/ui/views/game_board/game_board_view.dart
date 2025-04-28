@@ -39,29 +39,38 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                     int col = index % viewModel.boardSize;
                     final cell = viewModel.board[row][col];
 
-                    return DragTarget<String>(
-                      onAcceptWithDetails: (data) {
-                        final parts = data.data.split(':');
-                        final letter = parts[0];
+                    return DragTarget<Map<String, dynamic>>(
+                      onAcceptWithDetails: (details) {
+                        final incomingData = details.data;
+                        final character = incomingData['character'];
+                        final letterId = incomingData['letterId'];
+                        final score = incomingData["score"];
 
-                        if (parts[1].contains('_')) {
-                          final fromCoords = parts[1].split('_');
-                          final fromRow = int.parse(fromCoords[0]);
-                          final fromCol = int.parse(fromCoords[1]);
+                        if (incomingData.containsKey('fromRow') &&
+                            incomingData.containsKey('fromCol')) {
+                          final fromRow = incomingData['fromRow'];
+                          final fromCol = incomingData['fromCol'];
 
                           if (viewModel.board[row][col].letter.isEmpty) {
-                            final movingLetter =
-                                viewModel.board[fromRow][fromCol].letter;
                             viewModel.board[fromRow][fromCol].letter = '';
-                            viewModel.placeLetter(row, col, movingLetter);
+
+                            viewModel.placeLetter(
+                                row, col, character, score, letterId);
+
+                            viewModel.notifyListeners();
                           }
                         } else {
-                          final index = int.tryParse(parts[1]);
-                          if (index != null &&
-                              !viewModel.usedLetterIndexes.contains(index) &&
-                              viewModel.board[row][col].letter.isEmpty) {
-                            viewModel.usedLetterIndexes.add(index);
-                            viewModel.placeLetter(row, col, letter);
+                          if (viewModel.board[row][col].letter.isEmpty) {
+                             if (!viewModel.usedLetterIndexes
+                                .contains(letterId)) {
+                              viewModel.usedLetterIndexes.add(letterId);
+                            }
+
+                            viewModel.placeLetter(
+                                row, col, character, score, letterId);
+
+                            viewModel
+                                .notifyListeners(); 
                           }
                         }
                       },
@@ -88,28 +97,41 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                                 ),
                               if (cell.letter.isNotEmpty)
                                 Positioned.fill(
-                                  child: Draggable<String>(
-                                    data: '${cell.letter}:${row}_$col',
-                                    feedback: Material(
-                                      color: Colors.transparent,
-                                      child: SizedBox(
-                                        width: 30,
-                                        height: 30,
+                                  child: Builder(
+                                    builder: (context) {
+                                      return Draggable<Map<String, dynamic>>(
+                                        data: {
+                                          'letterId': cell.letterId,
+                                          'character': cell.letter,
+                                          'score': viewModel
+                                              .getLetterPoint(cell.letter),
+                                          'fromRow': row,
+                                          'fromCol': col,
+                                        },
+                                        feedback: Material(
+                                          color: Colors.transparent,
+                                          child: SizedBox(
+                                            width: 30,
+                                            height: 30,
+                                            child: buildPlacedTile(
+                                                cell.letter,
+                                                viewModel.getLetterPoint(
+                                                    cell.letter)),
+                                          ),
+                                        ),
+                                        childWhenDragging: Opacity(
+                                          opacity: 0.3,
+                                          child: buildPlacedTile(
+                                              cell.letter,
+                                              viewModel
+                                                  .getLetterPoint(cell.letter)),
+                                        ),
                                         child: buildPlacedTile(
                                             cell.letter,
                                             viewModel
                                                 .getLetterPoint(cell.letter)),
-                                      ),
-                                    ),
-                                    childWhenDragging: Opacity(
-                                      opacity: 0.3,
-                                      child: buildPlacedTile(
-                                          cell.letter,
-                                          viewModel
-                                              .getLetterPoint(cell.letter)),
-                                    ),
-                                    child: buildPlacedTile(cell.letter,
-                                        viewModel.getLetterPoint(cell.letter)),
+                                      );
+                                    },
                                   ),
                                 ),
                             ],
@@ -276,50 +298,55 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
       padding: const EdgeInsets.symmetric(horizontal: 4),
       child: SizedBox(
         height: 48,
-        child: DragTarget<String>(
+        child: DragTarget<Map<String, dynamic>>(
           onAcceptWithDetails: (details) {
-            final parts = details.data.split(':');
-            final letter = parts[0];
+            final data = details.data;
+            final letterId = data['letterId'];
 
-            if (parts[1].contains('_')) {
-              final fromCoords = parts[1].split('_');
-              final fromRow = int.parse(fromCoords[0]);
-              final fromCol = int.parse(fromCoords[1]);
+            if (data.containsKey('fromRow') && data.containsKey('fromCol')) {
+              final fromRow = data['fromRow'];
+              final fromCol = data['fromCol'];
 
               viewModel.board[fromRow][fromCol].letter = '';
+              viewModel.board[fromRow][fromCol].score = 0;
+              viewModel.board[fromRow][fromCol].letterId = null;
 
-              final indexInBar = viewModel.letters.indexOf(letter);
-              if (indexInBar != -1) {
-                viewModel.usedLetterIndexes.remove(
-                    indexInBar); // alttaki kullanılmayan harf yerine geri koyma islemi
-              }
+              viewModel.usedLetterIndexes.remove(letterId);
 
               viewModel.notifyListeners();
             }
-            // Bar içi sürükleme için bir şey yapma
           },
           builder: (context, candidateData, rejectedData) {
             return Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: viewModel.letters.map((letter) {
-                final index = viewModel.letters.indexOf(letter);
-                final isUsed = viewModel.usedLetterIndexes.contains(index);
+              children: viewModel.letterObjects.map((letterObj) {
+                final letterId = letterObj['letterId'];
+                final character = letterObj['character'];
+                final score = letterObj['score'];
+
+                final isUsed = viewModel.usedLetterIndexes.contains(letterId);
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Draggable<String>(
-                    data: '$letter:$index',
-                    feedback: Material(
-                      color: Colors.transparent,
-                      child: buildLetterTile(letter, viewModel, shadow: true),
-                    ),
-                    childWhenDragging: Opacity(
-                        opacity: 0.4,
-                        child: buildLetterTile(letter, viewModel)),
-                    child: isUsed
-                        ? const SizedBox(width: 50)
-                        : buildLetterTile(letter, viewModel),
-                  ),
+                  child: isUsed
+                      ? const SizedBox(width: 50) // Kullanılmışsa boşluk göster
+                      : Draggable<Map<String, dynamic>>(
+                          data: {
+                            'letterId': letterId,
+                            'character': character,
+                            'score': score,
+                          },
+                          feedback: Material(
+                            color: Colors.transparent,
+                            child:
+                                buildLetterTile(character, score, shadow: true),
+                          ),
+                          childWhenDragging: Opacity(
+                            opacity: 0.4,
+                            child: buildLetterTile(character, score),
+                          ),
+                          child: buildLetterTile(character, score),
+                        ),
                 );
               }).toList(),
             );
@@ -329,10 +356,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
     );
   }
 
-  Widget buildLetterTile(String letter, GameBoardViewModel viewModel,
-      {bool shadow = false}) {
-    final point = viewModel.getLetterPoint(letter);
-
+  Widget buildLetterTile(String letter, int score, {bool shadow = false}) {
     return Container(
       width: 50,
       height: 50,
@@ -353,13 +377,13 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                 end: Alignment.bottomRight,
                 stops: [0.0, 0.35, 0.7, 1.0],
               ),
-              border: Border.all(color: const Color(0xFF5C3B26), width: 1.2),
+              border: Border.all(color: Color(0xFF5C3B26), width: 1.2),
               boxShadow: shadow
                   ? [
                       BoxShadow(
                           color: Colors.black.withOpacity(0.2),
                           blurRadius: 4,
-                          offset: const Offset(2, 2))
+                          offset: Offset(2, 2))
                     ]
                   : [],
             ),
@@ -382,7 +406,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
             top: 4,
             right: 6,
             child: Text(
-              point.toString(),
+              score.toString(),
               style: const TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w700,

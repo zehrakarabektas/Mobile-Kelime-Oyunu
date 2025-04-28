@@ -8,16 +8,24 @@ import '../../../services/user_service.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
 class Cell {
+  int? letterId;
   String letter;
+  int score;
   final int bonusCode; // 0 = yok, 1 = H2, 2 = H3, 3 = K2, 4 = K3, 5 = ★
   final bool hasMine;
   final bool hasReward;
+  int row;
+  int col;
 
   Cell({
+    this.letterId,
     this.letter = '',
+    this.score = 0,
     required this.bonusCode,
     this.hasMine = false,
     this.hasReward = false,
+    required this.row,
+    required this.col,
   });
 }
 
@@ -83,7 +91,8 @@ class GameBoardViewModel extends BaseViewModel {
   late List<List<Cell>> board;
   List<int> usedLetterIndexes = [];
   List<Map<String, dynamic>> letterObjects = [];
-  List<String> letters = [];
+  List<int?> letterSlot = [];
+  List<Offset> placeLetterList=[];
 
   final Map<String, int> letterPoints = {
     'A': 1,
@@ -139,14 +148,19 @@ class GameBoardViewModel extends BaseViewModel {
   void initializeBoard() {
     board = List.generate(boardSize, (row) {
       return List.generate(boardSize, (col) {
-        return Cell(bonusCode: bonusMatrix[row][col]);
+        return Cell(bonusCode: bonusMatrix[row][col],row:row,col:col,);
       });
     });
   }
 
-  void placeLetter(int row, int col, String letter) {
+  void placeLetter(int row, int col, String letter, int score, int letterId) {
     board[row][col].letter = letter;
-    notifyListeners();
+    board[row][col].score = score;
+    board[row][col].letterId = letterId;
+
+    if (!usedLetterIndexes.contains(letterId)) {
+    usedLetterIndexes.add(letterId);
+  }
   }
 
   String intToBonusText(int code) {
@@ -204,7 +218,6 @@ class GameBoardViewModel extends BaseViewModel {
 
       if (response.statusCode == 200) {
         final letterData = jsonDecode(response.body) as List<dynamic>;
-        letters = letterData.map((e) => e['character'] as String).toList();
         letterObjects = letterData
             .map((e) => {
                   'letterId': e['letterID'],
@@ -212,8 +225,8 @@ class GameBoardViewModel extends BaseViewModel {
                   'score': e['score'],
                 })
             .toList();
-
-        debugPrint("Gelen harfler-> ${letters.join(", ")}");
+        letterSlot = List<int?>.generate(
+            letterObjects.length, (index) => letterObjects[index]['letterId']);
 
         notifyListeners();
       } else {
