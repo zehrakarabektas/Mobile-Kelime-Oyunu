@@ -23,6 +23,7 @@ class GamehomeViewModel extends BaseViewModel {
   }
 
   void goToSettings() {
+    _navigationService.replaceWithSettingsView();
     debugPrint("Ayarlar ekranına yönlendiriliyor...");
   }
 

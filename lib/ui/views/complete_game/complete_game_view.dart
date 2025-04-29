@@ -29,7 +29,7 @@ class CompleteGameView extends StackedView<CompleteGameViewModel> {
           SafeArea(
             child: Column(
               children: [
-                const SizedBox(height: 500), 
+                const SizedBox(height: 500),
                 Expanded(
                   child: ListView.builder(
                     padding: const EdgeInsets.symmetric(horizontal: 45),

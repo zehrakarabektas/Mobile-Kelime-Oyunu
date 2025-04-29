@@ -6,12 +6,13 @@ import 'package:yazlab2proje2kelimeoyunumobil/app/app.router.dart';
 import 'package:stacked_services/stacked_services.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/services/letter_list_service.dart';
 
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await setupLocator();
   setupDialogUi();
   setupBottomSheetUi();
-  await LetterListService().loadWords(); 
+  await LetterListService().loadWords();
   runApp(const MainApp());
 }
 

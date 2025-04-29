@@ -58,6 +58,11 @@ class GameService with ListenableServiceMixin {
     notifyListeners();
   }
 
+  void setGameId(int id) {
+    gameId = id.toString();
+    notifyListeners();
+  }
+
   void setFromMap(Map<String, dynamic> game) {
     setGame(
       gameId: game['gameId'].toString(),

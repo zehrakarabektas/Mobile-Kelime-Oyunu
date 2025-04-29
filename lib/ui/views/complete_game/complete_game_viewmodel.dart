@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../../../app/app.locator.dart';
 import '../../../services/user_service.dart';
-import 'package:signalr_netcore/signalr_client.dart'; 
+import 'package:signalr_netcore/signalr_client.dart';
 
 class Oyun {
   final String rakipAdi;

@@ -61,7 +61,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                           }
                         } else {
                           if (viewModel.board[row][col].letter.isEmpty) {
-                             if (!viewModel.usedLetterIndexes
+                            if (!viewModel.usedLetterIndexes
                                 .contains(letterId)) {
                               viewModel.usedLetterIndexes.add(letterId);
                             }
@@ -69,8 +69,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                             viewModel.placeLetter(
                                 row, col, character, score, letterId);
 
-                            viewModel
-                                .notifyListeners(); 
+                            viewModel.notifyListeners();
                           }
                         }
                       },

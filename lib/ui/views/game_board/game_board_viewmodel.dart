@@ -56,9 +56,11 @@ class GameBoardViewModel extends BaseViewModel {
       final urlGameInfo =
           Uri.parse('http://192.168.1.178:7109/api/Game/game/$gameId');
       final responseGameInfo = await http.get(urlGameInfo);
+      debugPrint("Api gelen oyun bilgisi:${responseGameInfo.body}");
       if (responseGameInfo.statusCode == 200) {
         final gameData = jsonDecode(responseGameInfo.body);
 
+        debugPrint("Decode oyun bilgisi:$gameData");
         _gameService.setGame(
           gameId: gameData['gameId'].toString(),
           gamer1Id: gameData['gamer1Id'],
@@ -92,7 +94,7 @@ class GameBoardViewModel extends BaseViewModel {
   List<int> usedLetterIndexes = [];
   List<Map<String, dynamic>> letterObjects = [];
   List<int?> letterSlot = [];
-  List<Offset> placeLetterList=[];
+  List<Offset> placeLetterList = [];
 
   final Map<String, int> letterPoints = {
     'A': 1,
@@ -148,7 +150,11 @@ class GameBoardViewModel extends BaseViewModel {
   void initializeBoard() {
     board = List.generate(boardSize, (row) {
       return List.generate(boardSize, (col) {
-        return Cell(bonusCode: bonusMatrix[row][col],row:row,col:col,);
+        return Cell(
+          bonusCode: bonusMatrix[row][col],
+          row: row,
+          col: col,
+        );
       });
     });
   }
@@ -159,8 +165,8 @@ class GameBoardViewModel extends BaseViewModel {
     board[row][col].letterId = letterId;
 
     if (!usedLetterIndexes.contains(letterId)) {
-    usedLetterIndexes.add(letterId);
-  }
+      usedLetterIndexes.add(letterId);
+    }
   }
 
   String intToBonusText(int code) {
