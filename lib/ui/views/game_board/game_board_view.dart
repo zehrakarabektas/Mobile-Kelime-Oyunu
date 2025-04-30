@@ -465,7 +465,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
               ),
               elevation: 3,
             ),
-            child: const Column(
+            child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Icon(Icons.send, size: 20, color: Colors.white),
@@ -476,7 +476,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                     Icon(Icons.timer, color: Colors.white70, size: 14),
                     SizedBox(width: 4),
                     Text(
-                      "00:35",
+                      viewModel.leftTimeString,
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12,

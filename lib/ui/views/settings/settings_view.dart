@@ -51,14 +51,15 @@ class SettingsView extends StackedView<SettingsViewModel> {
                   Card(
                     color: Colors.black.withOpacity(0.3),
                     shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16)),
+                        borderRadius: BorderRadius.circular(8)),
                     elevation: 4,
                     child: Padding(
-                      padding: const EdgeInsets.all(20),
+                      padding: const EdgeInsets.all(12),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               const Icon(
                                 Icons.bar_chart,
@@ -77,68 +78,64 @@ class SettingsView extends StackedView<SettingsViewModel> {
                             ],
                           ),
                           const SizedBox(height: 20),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+
+                          Column(
                             children: [
-                              Row(
-                                children: [
-                                   Image.asset(
-                                  'lib/assets/images/kazanilanicon.png',
-                                  height: 40,
-                                  width: 40,
-                                ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Kazanılan: ${0}",
-                                    style: GoogleFonts.rubik(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
+                              Image.asset(
+                                'lib/assets/images/kazanilanicon.png',
+                                height: 40,
+                                width: 40,
                               ),
-                              Row(
-                                children: [
-                                   Image.asset(
-                                  'lib/assets/images/kaybedilenicon.png',
-                                  height: 40,
-                                  width: 40,
+                              const SizedBox(height: 6),
+                              Text(
+                                "Kazanılan: ${0}",
+                                style: GoogleFonts.rubik(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    "Kaybedilen: ${0}",
-                                    style: GoogleFonts.rubik(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 20),
-                          Align(
-                            alignment: Alignment.center,
-                            child: Column(
-                              children: [
-                                Image.asset(
-                                  'lib/assets/images/basarioraniicon.png',
-                                  height: 40,
-                                  width: 40,
+                          const SizedBox(height: 16),
+
+                          Column(
+                            children: [
+                              Image.asset(
+                                'lib/assets/images/kaybedilenicon.png',
+                                height: 40,
+                                width: 40,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Kaybedilen: ${0}",
+                                style: GoogleFonts.rubik(
+                                  color: Colors.white,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w500,
                                 ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Başarı: %${viewModel.successRate}",
-                                  style: GoogleFonts.rubik(
-                                    color: Colors.amberAccent,
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+
+                          Column(
+                            children: [
+                              Image.asset(
+                                'lib/assets/images/basarioraniicon.png',
+                                height: 40,
+                                width: 40,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                "Başarı: %${viewModel.successRate}",
+                                style: GoogleFonts.rubik(
+                                  color: Colors.amberAccent,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
@@ -159,7 +156,7 @@ class SettingsView extends StackedView<SettingsViewModel> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Image.asset(
-                            'lib/assets/images/cikisyap.png', // kendi çıkış görselin
+                            'lib/assets/images/cikisyap.png', 
                             height: 100,
                             width: 150,
                           ),

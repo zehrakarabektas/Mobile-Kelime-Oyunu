@@ -1,6 +1,10 @@
+import 'dart:async';
+import 'package:http/http.dart' as http;
 import 'package:stacked/stacked.dart';
 
 class GameService with ListenableServiceMixin {
+  Timer? _timer;
+
   String? gameId;
   int? gamer1Id;
   int? gamer2Id;
@@ -9,7 +13,6 @@ class GameService with ListenableServiceMixin {
   String? gameType;
   String? gameStatus;
   int? turnGamerId;
-  int gameSeconds = 0;
   int gamer1Score = 0;
   int gamer2Score = 0;
   int gamer1PassCount = 0;
@@ -17,6 +20,7 @@ class GameService with ListenableServiceMixin {
   int gameLetterCount = 86;
   DateTime? startTime;
   DateTime? lastMoveTime;
+  int gameSeconds = 0;
   int? winnerGamerId;
   bool isDraw = false;
 
@@ -27,7 +31,6 @@ class GameService with ListenableServiceMixin {
     required String gamer1Name,
     required String gamer2Name,
     required int turnGamerId,
-    required int gameSeconds,
     required int gamer1Score,
     required int gamer2Score,
     required int gamer1PassCount,
@@ -35,6 +38,7 @@ class GameService with ListenableServiceMixin {
     required int gameLetterCount,
     required DateTime startTime,
     required DateTime lastMoveTime,
+    required int gameSeconds,
     int? winnerGamerId,
     bool isDraw = false,
   }) {
@@ -71,21 +75,24 @@ class GameService with ListenableServiceMixin {
       gamer1Name: game['gamer1Name'],
       gamer2Name: game['gamer2Name'],
       turnGamerId: game['turnGamerId'],
-      gameSeconds: game['gameSeconds'] ?? 0,
       gamer1Score: game['gamer1Score'] ?? 0,
       gamer2Score: game['gamer2Score'] ?? 0,
       gamer1PassCount: game['gamer1PassCount'] ?? 0,
       gamer2PassCount: game['gamer2PassCount'] ?? 0,
       gameLetterCount: game['gameLetterCount'] ?? 86,
       startTime: DateTime.tryParse(game['startTime'] ?? "") ?? DateTime.now(),
-      lastMoveTime:
-          DateTime.tryParse(game['lastMoveTime'] ?? "") ?? DateTime.now(),
+      lastMoveTime: DateTime.tryParse(game['lastMoveTime'] ?? "") ??
+          DateTime.tryParse(game['startTime'] ?? "") ??
+          DateTime.now(),
+      gameSeconds: game['gameSeconds'] ?? 0,
       winnerGamerId: game['winnerGamerId'],
       isDraw: game['isDraw'] ?? false,
     );
   }
 
   void clear() {
+    _timer?.cancel();
+    _timer = null;
     gameId = null;
     gamer1Id = null;
     gamer2Id = null;
@@ -117,6 +124,63 @@ class GameService with ListenableServiceMixin {
       return gamer2Name ?? "Rakip";
     } else {
       return gamer1Name ?? "Rakip";
+    }
+  }
+
+  Duration get leftTime {
+    final now = DateTime.now();
+
+    final reference = (lastMoveTime != null && lastMoveTime != startTime)
+        ? lastMoveTime!
+        : startTime!;
+
+    final elapsed = now.difference(reference);
+    final remaining = Duration(seconds: gameSeconds) - elapsed;
+
+    // 🔍 Ekrana yaz
+    print("🕒 now: $now");
+    print("📌 reference: $reference");
+    print("⏱ elapsed: $elapsed");
+    print("🔻 remaining: $remaining");
+
+    return remaining.isNegative ? Duration.zero : remaining;
+  }
+
+  String get leftTimeString {
+    final t = leftTime;
+    final min = t.inMinutes.toString().padLeft(2, '0');
+    final sec = (t.inSeconds % 60).toString().padLeft(2, '0');
+    final formatted = "$min:$sec";
+
+    // 🔍 Formatlı halini de yaz
+    print("🧾 leftTimeString: $formatted");
+    return formatted;
+  }
+
+  void timeOut(int myUserId) {
+    if (turnGamerId == myUserId && winnerGamerId == null) {
+      winnerGamerId = (gamer1Id == myUserId) ? gamer2Id : gamer1Id;
+      isDraw = false;
+      GameOverApi();
+      notifyListeners();
+    }
+  }
+
+  Future<void> GameOverApi() async {
+    final url = Uri.parse("http://192.168.1.178:7109/api/Game/oyun-bitir");
+
+    try {
+      await http.post(
+        url,
+        headers: {'Content-Type': 'application/json'},
+        body: '''{
+          "gameId": "$gameId",
+          "winnerGamerId": $winnerGamerId,
+          "isDraw": $isDraw
+        }''',
+      );
+    } catch (e) {
+      print("Oyun bitirilemedi: $e");
     }
   }
 }

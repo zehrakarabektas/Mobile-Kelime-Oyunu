@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -11,7 +12,7 @@ class Cell {
   int? letterId;
   String letter;
   int score;
-  final int bonusCode; // 0 = yok, 1 = H2, 2 = H3, 3 = K2, 4 = K3, 5 = ★
+  final int bonusCode; 
   final bool hasMine;
   final bool hasReward;
   int row;
@@ -41,9 +42,13 @@ class GameBoardViewModel extends BaseViewModel {
 
     _hubConnect.on("DataChanged", (args) async {
       debugPrint("SignalR DataChanged event geldi!");
-
       await fetchGameData();
+      notifyListeners();
+    });
 
+    _hubConnect.on("TurnPassed", (args) async {
+      debugPrint("SignalR TurnPassed event geldi!");
+      await fetchGameData();
       notifyListeners();
     });
 
@@ -319,4 +324,21 @@ class GameBoardViewModel extends BaseViewModel {
   int get rivalScore => isGamer1 ? gamer2Score : gamer1Score;
   int get usersPassCount =>
       isGamer1 ? _gameService.gamer1PassCount : _gameService.gamer2PassCount;
+  String get leftTimeString => _gameService.leftTimeString;
+
+  //Timer? _timer;
+
+  /*void startTimer() {
+  /  _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      print("🔄 Timer tick - calling notifyListeners()");
+      notifyListeners();
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }*/
 }

@@ -93,8 +93,13 @@ class NewGameViewModel extends BaseViewModel {
           );
         });
 
-        Future.delayed(const Duration(seconds: 2), () {
-          _navigationService.replaceWithGameBoardView();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          final navigator = _navigationService.navigatorKey?.currentState;
+          if (navigator != null && navigator.canPop()) {
+            _navigationService.replaceWithGameBoardView();
+          } else {
+            _navigationService.navigateToGameBoardView(); 
+          }
         });
 
         dialogClosed = true;
