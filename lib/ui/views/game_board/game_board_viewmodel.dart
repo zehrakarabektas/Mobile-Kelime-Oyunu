@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:stacked/stacked.dart';
+import 'package:stacked_services/stacked_services.dart';
+import 'package:yazlab2proje2kelimeoyunumobil/app/app.router.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/app/app.locator.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/services/game_service.dart';
 import '../../../services/user_service.dart';
@@ -12,7 +14,7 @@ class Cell {
   int? letterId;
   String letter;
   int score;
-  final int bonusCode; 
+  final int bonusCode;
   final bool hasMine;
   final bool hasReward;
   int row;
@@ -31,6 +33,7 @@ class Cell {
 }
 
 class GameBoardViewModel extends BaseViewModel {
+  final _navigationService = locator<NavigationService>();
   final _userService = locator<UserService>();
   final _gameService = locator<GameService>();
   late HubConnection _hubConnect;
@@ -308,6 +311,11 @@ class GameBoardViewModel extends BaseViewModel {
     }
   }
 
+  void goToGameHome() {
+    _navigationService.replaceWithGamehomeView();
+  }
+
+  int? get userId => _userService.userId;
   String? get userName => _userService.userName;
   String get gamer1Name => _gameService.gamer1Name ?? "Sen";
   String get gamer2Name => _gameService.gamer2Name ?? "Rakip";
@@ -325,14 +333,22 @@ class GameBoardViewModel extends BaseViewModel {
   int get usersPassCount =>
       isGamer1 ? _gameService.gamer1PassCount : _gameService.gamer2PassCount;
   String get leftTimeString => _gameService.leftTimeString;
+  int? get turnUserId => _gameService.turnGamerId;
 
-  //Timer? _timer;
+  Timer? _timer;
 
-  /*void startTimer() {
-  /  _timer?.cancel();
+  void startTimer() {
+    _timer?.cancel();
+
+    if (_gameService.leftTime.inSeconds <= 0) {
+      return;
+    }
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      print("🔄 Timer tick - calling notifyListeners()");
       notifyListeners();
+      if (_gameService.leftTime.inSeconds <= 0) {
+        _timer?.cancel();
+        print("⏰ Süre doldu, timer durdu.");
+      }
     });
   }
 
@@ -340,5 +356,5 @@ class GameBoardViewModel extends BaseViewModel {
   void dispose() {
     _timer?.cancel();
     super.dispose();
-  }*/
+  }
 }

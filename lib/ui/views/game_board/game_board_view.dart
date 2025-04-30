@@ -163,6 +163,9 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
     viewModel.initializeBoard();
     viewModel.fetchGamerLetters();
     viewModel.initSignalR();
+    if (viewModel.turnUserId == viewModel.userId) {
+      viewModel.startTimer();
+    }
   }
 
   Widget buildTopBar(GameBoardViewModel viewModel) {
@@ -328,7 +331,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: isUsed
-                      ? const SizedBox(width: 50) // Kullanılmışsa boşluk göster
+                      ? const SizedBox(width: 50)
                       : Draggable<Map<String, dynamic>>(
                           data: {
                             'letterId': letterId,
@@ -432,7 +435,6 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
               debugPrint("Geri Al butonuna tıklandı");
             },
           ),
-
           buildGameButton(
             Icons.refresh,
             "Pas",
@@ -452,7 +454,6 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
               viewModel.userSurrender();
             },
           ),
-
           ElevatedButton(
             onPressed: () {
               // Gönderme işlemi (kelime gönderilecek)
@@ -473,14 +474,25 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.timer, color: Colors.white70, size: 14),
-                    SizedBox(width: 4),
-                    Text(
-                      viewModel.leftTimeString,
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
+                    Visibility(
+                      visible: viewModel.userId == viewModel.turnUserId,
+                      maintainSize: true,
+                      maintainAnimation: true,
+                      maintainState: true,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(Icons.timer, color: Colors.white70, size: 14),
+                          SizedBox(width: 4),
+                          Text(
+                            viewModel.leftTimeString,
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -488,11 +500,9 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
               ],
             ),
           ),
-
-          // Çıkış butonu (normal ElevatedButton)
           ElevatedButton(
             onPressed: () {
-              // Çıkış işlemi
+              viewModel.goToGameHome();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.red.shade400,

@@ -137,23 +137,33 @@ class GameService with ListenableServiceMixin {
     final elapsed = now.difference(reference);
     final remaining = Duration(seconds: gameSeconds) - elapsed;
 
-    // 🔍 Ekrana yaz
-    print("🕒 now: $now");
+    /*print("🕒 now: $now");
     print("📌 reference: $reference");
     print("⏱ elapsed: $elapsed");
-    print("🔻 remaining: $remaining");
+    print("🔻 remaining: $remaining");*/
 
     return remaining.isNegative ? Duration.zero : remaining;
   }
 
   String get leftTimeString {
-    final t = leftTime;
-    final min = t.inMinutes.toString().padLeft(2, '0');
-    final sec = (t.inSeconds % 60).toString().padLeft(2, '0');
-    final formatted = "$min:$sec";
+    final time = leftTime;
+    final hours = time.inHours;
+    final minutes = time.inMinutes.remainder(60);
+    final seconds = time.inSeconds.remainder(60);
 
-    // 🔍 Formatlı halini de yaz
-    print("🧾 leftTimeString: $formatted");
+    String formatted;
+    if (hours > 0) {
+      final hStr = hours.toString().padLeft(2, '0');
+      final mStr = minutes.toString().padLeft(2, '0');
+      final sStr = seconds.toString().padLeft(2, '0');
+      formatted = "$hStr:$mStr:$sStr";
+    } else {
+      final mStr = minutes.toString().padLeft(2, '0');
+      final sStr = seconds.toString().padLeft(2, '0');
+      formatted = "$mStr:$sStr";
+    }
+
+    //print("🧾 leftTimeString: $formatted");
     return formatted;
   }
 
