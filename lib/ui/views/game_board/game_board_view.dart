@@ -45,8 +45,32 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                         final character = incomingData['character'];
                         final letterId = incomingData['letterId'];
                         final score = incomingData["score"];
+                        final fromRow = incomingData['fromRow'];
+                        final fromCol = incomingData['fromCol'];
 
-                        if (incomingData.containsKey('fromRow') &&
+                        if (fromRow != null && fromCol != null) {
+                          viewModel.removeLetter(fromRow, fromCol);
+                        }
+
+                        if (viewModel.board[row][col].letter.isEmpty) {
+                          viewModel.placeLetter(
+                              row, col, character, score, letterId);
+                        }
+
+                        /*final newWord = viewModel.getUserCreateWord();
+                        final isValid = viewModel.isPlacedWordValid();
+                        debugPrint("🧩 Yeni kelime: $newWord");
+                        debugPrint("✅ Geçerli mi: $isValid");*/
+
+                        viewModel.notifyListeners();
+                      },
+                      /* onAcceptWithDetails: (details) {
+                        final incomingData = details.data;
+                        final character = incomingData['character'];
+                        final letterId = incomingData['letterId'];
+                        final score = incomingData["score"];
+
+                       if (incomingData.containsKey('fromRow') &&
                             incomingData.containsKey('fromCol')) {
                           final fromRow = incomingData['fromRow'];
                           final fromCol = incomingData['fromCol'];
@@ -72,7 +96,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                             viewModel.notifyListeners();
                           }
                         }
-                      },
+                      },*/
                       builder: (context, candidateData, rejectedData) {
                         return Container(
                           margin: const EdgeInsets.all(1),
@@ -98,6 +122,14 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                                 Positioned.fill(
                                   child: Builder(
                                     builder: (context) {
+                                      final isPlaced =
+                                          viewModel.placedLetters.any(
+                                        (e) => e.row == row && e.col == col,
+                                      );
+                                      final isValid = isPlaced
+                                          ? viewModel.isPlacedWordValid()
+                                          : true;
+
                                       return Draggable<Map<String, dynamic>>(
                                         data: {
                                           'letterId': cell.letterId,
@@ -113,22 +145,27 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                                             width: 30,
                                             height: 30,
                                             child: buildPlacedTile(
-                                                cell.letter,
-                                                viewModel.getLetterPoint(
-                                                    cell.letter)),
+                                              cell.letter,
+                                              viewModel
+                                                  .getLetterPoint(cell.letter),
+                                              isWord: isValid,
+                                            ),
                                           ),
                                         ),
                                         childWhenDragging: Opacity(
                                           opacity: 0.3,
                                           child: buildPlacedTile(
-                                              cell.letter,
-                                              viewModel
-                                                  .getLetterPoint(cell.letter)),
-                                        ),
-                                        child: buildPlacedTile(
                                             cell.letter,
                                             viewModel
-                                                .getLetterPoint(cell.letter)),
+                                                .getLetterPoint(cell.letter),
+                                            isWord: isValid,
+                                          ),
+                                        ),
+                                        child: buildPlacedTile(
+                                          cell.letter,
+                                          viewModel.getLetterPoint(cell.letter),
+                                          isWord: isValid,
+                                        ),
                                       );
                                     },
                                   ),
@@ -309,9 +346,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
               final fromRow = data['fromRow'];
               final fromCol = data['fromCol'];
 
-              viewModel.board[fromRow][fromCol].letter = '';
-              viewModel.board[fromRow][fromCol].score = 0;
-              viewModel.board[fromRow][fromCol].letterId = null;
+              viewModel.removeLetter(fromRow, fromCol);
 
               viewModel.usedLetterIndexes.remove(letterId);
 
@@ -456,7 +491,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
           ),
           ElevatedButton(
             onPressed: () {
-              // Gönderme işlemi (kelime gönderilecek)
+              viewModel.sendWordButton();
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: Colors.green.shade500,
@@ -595,7 +630,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
     );
   }
 
-  Widget buildPlacedTile(String letter, int point) {
+  Widget buildPlacedTile(String letter, int point, {bool isWord = false}) {
     return Container(
       alignment: Alignment.center,
       decoration: BoxDecoration(
@@ -611,7 +646,10 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
           end: Alignment.bottomRight,
           stops: [0.0, 0.35, 0.7, 1.0],
         ),
-        border: Border.all(color: const Color(0xFF5C3B26), width: 1.2),
+        border: Border.all(
+          color: isWord ? Colors.green : Colors.red,
+          width: 2,
+        ),
         boxShadow: [
           BoxShadow(
               color: Colors.black.withOpacity(0.2),

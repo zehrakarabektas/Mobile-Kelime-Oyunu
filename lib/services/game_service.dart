@@ -18,8 +18,10 @@ class GameService with ListenableServiceMixin {
   int gamer1PassCount = 0;
   int gamer2PassCount = 0;
   int gameLetterCount = 86;
+  List<dynamic> gameCell = [];
   DateTime? startTime;
   DateTime? lastMoveTime;
+  DateTime? serverNow;
   int gameSeconds = 0;
   int? winnerGamerId;
   bool isDraw = false;
@@ -36,8 +38,10 @@ class GameService with ListenableServiceMixin {
     required int gamer1PassCount,
     required int gamer2PassCount,
     required int gameLetterCount,
+    required List<dynamic> gameCell,
     required DateTime startTime,
     required DateTime lastMoveTime,
+    required DateTime serverNow,
     required int gameSeconds,
     int? winnerGamerId,
     bool isDraw = false,
@@ -54,8 +58,10 @@ class GameService with ListenableServiceMixin {
     this.gamer1PassCount = gamer1PassCount;
     this.gamer2PassCount = gamer2PassCount;
     this.gameLetterCount = gameLetterCount;
+    this.gameCell = gameCell;
     this.startTime = startTime;
     this.lastMoveTime = lastMoveTime;
+    this.serverNow = serverNow;
     this.winnerGamerId = winnerGamerId;
     this.isDraw = isDraw;
 
@@ -80,10 +86,10 @@ class GameService with ListenableServiceMixin {
       gamer1PassCount: game['gamer1PassCount'] ?? 0,
       gamer2PassCount: game['gamer2PassCount'] ?? 0,
       gameLetterCount: game['gameLetterCount'] ?? 86,
-      startTime: DateTime.tryParse(game['startTime'] ?? "") ?? DateTime.now(),
-      lastMoveTime: DateTime.tryParse(game['lastMoveTime'] ?? "") ??
-          DateTime.tryParse(game['startTime'] ?? "") ??
-          DateTime.now(),
+      gameCell: game['gameCell'] ?? [],
+      startTime: DateTime.tryParse(game['startTime'] ?? "")?.toUtc() ?? DateTime.now().toUtc(),
+      lastMoveTime: DateTime.tryParse(game['lastMoveTime'] ?? "")?.toUtc() ?? DateTime.now().toUtc(),
+      serverNow: DateTime.tryParse(game['serverNow'] ?? "")?.toUtc() ?? DateTime.now().toUtc(),
       gameSeconds: game['gameSeconds'] ?? 0,
       winnerGamerId: game['winnerGamerId'],
       isDraw: game['isDraw'] ?? false,
@@ -107,6 +113,7 @@ class GameService with ListenableServiceMixin {
     gameLetterCount = 100;
     gamer1PassCount = 2;
     gamer2PassCount = 2;
+    gameCell = [];
     startTime = null;
     lastMoveTime = null;
     winnerGamerId = null;
@@ -128,19 +135,15 @@ class GameService with ListenableServiceMixin {
   }
 
   Duration get leftTime {
-    final now = DateTime.now();
-
-    final reference = (lastMoveTime != null && lastMoveTime != startTime)
-        ? lastMoveTime!
-        : startTime!;
-
-    final elapsed = now.difference(reference);
-    final remaining = Duration(seconds: gameSeconds) - elapsed;
-
-    /*print("🕒 now: $now");
-    print("📌 reference: $reference");
-    print("⏱ elapsed: $elapsed");
-    print("🔻 remaining: $remaining");*/
+    final now = serverNow ?? DateTime.now().toUtc();
+    final lastTime = now.difference(lastMoveTime!);   
+    final remaining = Duration(seconds: gameSeconds) - lastTime;
+    /*print("server:$serverNow");
+    print("last:$lastMoveTime");
+    print("start:$startTime");
+    print("now: $now");
+    print("elapsed: $lastTime");
+    print("remaining: $remaining");*/
 
     return remaining.isNegative ? Duration.zero : remaining;
   }
@@ -163,7 +166,7 @@ class GameService with ListenableServiceMixin {
       formatted = "$mStr:$sStr";
     }
 
-    //print("🧾 leftTimeString: $formatted");
+   // print("leftTimeString: $formatted");
     return formatted;
   }
 

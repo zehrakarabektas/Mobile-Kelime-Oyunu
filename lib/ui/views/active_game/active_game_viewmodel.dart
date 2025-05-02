@@ -79,10 +79,14 @@ class ActiveGameViewModel extends BaseViewModel {
           gamer1PassCount: gameData['gamer1PassCount'] ?? 0,
           gamer2PassCount: gameData['gamer2PassCount'] ?? 0,
           gameLetterCount: gameData['gameLetterCount'] ?? 86,
-          startTime:
-              DateTime.tryParse(gameData['startTime'] ?? "") ?? DateTime.now(),
-          lastMoveTime: DateTime.tryParse(gameData['lastMoveTime'] ?? "") ??
-              DateTime.now(),
+          gameCell: gameData['gameCell'] ?? [],
+          startTime: DateTime.tryParse(gameData['startTime'] ?? "")?.toUtc() ??
+              DateTime.now().toUtc(),
+          lastMoveTime:
+              DateTime.tryParse(gameData['lastMoveTime'] ?? "")?.toUtc() ??
+                  DateTime.now().toUtc(),
+          serverNow: DateTime.tryParse(gameData['serverNow'] ?? "")?.toUtc() ??
+              DateTime.now().toUtc(),
           winnerGamerId: gameData['winnerGamerId'],
           isDraw: gameData['isDraw'] ?? false,
         );
