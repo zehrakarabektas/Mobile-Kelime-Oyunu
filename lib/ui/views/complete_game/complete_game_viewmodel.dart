@@ -10,18 +10,24 @@ class Oyun {
   final int kendiPuani;
   final int rakipPuani;
   final DateTime tarih;
+  final bool isWinnerGamer;
+  final bool isDraw;
 
   Oyun(
       {required this.rakipAdi,
       required this.kendiPuani,
       required this.rakipPuani,
-      required this.tarih});
+      required this.tarih,
+      required this.isWinnerGamer,
+      required this.isDraw});
   factory Oyun.fromJson(Map<String, dynamic> json) {
     return Oyun(
       rakipAdi: json["rivalName"],
       kendiPuani: json["yourScore"],
       rakipPuani: json["rivalScore"],
       tarih: DateTime.parse(json["gameDate"]),
+      isWinnerGamer: json["isWinnerGamer"] ?? false,
+      isDraw: json["isDraw"] ?? false,
     );
   }
 }

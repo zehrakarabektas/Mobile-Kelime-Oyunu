@@ -26,13 +26,193 @@ class WordService {
     }
   }
 
-  String getFullWordFromBoard(
+  String getUserFullWord(
       List<UserPlayLetter> placedLetters, List<List<Cell>> board) {
     if (placedLetters.isEmpty) return "";
 
+    if (placedLetters.length == 1) {
+      final int row = placedLetters[0].row;
+      final int col = placedLetters[0].col;
+
+      int sol = col, sag = col;
+      while (sol > 0 && board[row][sol - 1].letter.isNotEmpty) {
+        sol--;
+      }
+      while (sag < 14 && board[row][sag + 1].letter.isNotEmpty) {
+        sag++;
+      }
+      if (sag - sol >= 1) {
+        return List.generate(sag - sol + 1, (i) => board[row][sol + i].letter)
+            .join();
+      }
+
+      int yukari = row, asagi = row;
+      while (yukari > 0 && board[yukari - 1][col].letter.isNotEmpty) {
+        yukari--;
+      }
+      while (asagi < 14 && board[asagi + 1][col].letter.isNotEmpty) {
+        asagi++;
+      }
+
+      if (asagi - yukari >= 1) {
+        return List.generate(
+            asagi - yukari + 1, (i) => board[yukari + i][col].letter).join();
+      }
+
+      int caprazRow = row;
+      int caprazCol = col;
+
+      while (caprazRow > 0 &&
+          caprazCol > 0 &&
+          board[caprazRow - 1][caprazCol - 1].letter.isNotEmpty) {
+        caprazRow--;
+        caprazCol--;
+      }
+
+      List<String> diagLetters = [];
+      int length = 0;
+
+      while (caprazRow <= 14 &&
+          caprazCol <= 14 &&
+          board[caprazRow][caprazCol].letter.isNotEmpty) {
+        diagLetters.add(board[caprazRow][caprazCol].letter);
+        caprazRow++;
+        caprazCol++;
+        length++;
+      }
+
+      if (length > 1) {
+        return diagLetters.join();
+      }
+
+      return placedLetters[0].letter;
+    }
+    bool x = placedLetters.every((e) => e.row == placedLetters[0].row);
+    bool y = placedLetters.every((e) => e.col == placedLetters[0].col);
+    bool z = placedLetters.every((e) =>
+        (e.row - e.col) == (placedLetters[0].row - placedLetters[0].col));
+
+    if (!x && !y && !z) return "";
+
+    List<String> wordLetters = [];
+
+    if (x) {
+      int row = placedLetters[0].row;
+      int basIndex =
+          placedLetters.map((e) => e.col).reduce((a, b) => a < b ? a : b);
+      int sonIndex =
+          placedLetters.map((e) => e.col).reduce((a, b) => a > b ? a : b);
+
+      while (basIndex > 0 && board[row][basIndex - 1].letter.isNotEmpty)
+        basIndex--;
+      while (sonIndex < 14 && board[row][sonIndex + 1].letter.isNotEmpty)
+        sonIndex++;
+
+      for (int c = basIndex; c <= sonIndex; c++) {
+        wordLetters.add(board[row][c].letter);
+      }
+    } else if (y) {
+      int col = placedLetters[0].col;
+      int basIndex =
+          placedLetters.map((e) => e.row).reduce((a, b) => a < b ? a : b);
+      int sonIndex =
+          placedLetters.map((e) => e.row).reduce((a, b) => a > b ? a : b);
+
+      while (basIndex > 0 && board[basIndex - 1][col].letter.isNotEmpty)
+        basIndex--;
+      while (sonIndex < 14 && board[sonIndex + 1][col].letter.isNotEmpty)
+        sonIndex++;
+
+      for (int r = basIndex; r <= sonIndex; r++) {
+        wordLetters.add(board[r][col].letter);
+      }
+    } else if (z) {
+      int basSatir = placedLetters[0].row;
+      int basSutun = placedLetters[0].col;
+
+      while (basSatir > 0 &&
+          basSutun > 0 &&
+          board[basSatir - 1][basSutun - 1].letter.isNotEmpty) {
+        basSatir--;
+        basSutun--;
+      }
+
+      while (basSatir <= 13 &&
+          basSutun <= 13 &&
+          board[basSatir][basSutun].letter.isNotEmpty) {
+        wordLetters.add(board[basSatir][basSutun].letter);
+        basSatir++;
+        basSutun++;
+      }
+    }
+
+    return wordLetters.join();
+  }
+
+  bool WorddeBoslukVarMi(
+      List<UserPlayLetter> placedLetters, List<List<Cell>> board) {
+    if (placedLetters.isEmpty) return false;
+
+    bool x = placedLetters.every((e) => e.row == placedLetters[0].row);
+    bool y = placedLetters.every((e) => e.col == placedLetters[0].col);
+    bool z = placedLetters.every((e) =>
+        (e.row - e.col) == (placedLetters[0].row - placedLetters[0].col));
+
+    if (!x && !y && !z) return false;
+
+    int way = x ? placedLetters[0].row : placedLetters[0].col;
+    List<int> indexes = placedLetters.map((e) => x ? e.col : e.row).toList();
+    indexes.sort();
+
+    if (x) {
+      int row = placedLetters[0].row;
+      List<int> cols = placedLetters.map((e) => e.col).toList()..sort();
+      for (int i = cols.first; i <= cols.last; i++) {
+        if (board[row][i].letter.isEmpty) return false;
+      }
+    } else if (y) {
+      int col = placedLetters[0].col;
+      List<int> rows = placedLetters.map((e) => e.row).toList()..sort();
+      for (int i = rows.first; i <= rows.last; i++) {
+        if (board[i][col].letter.isEmpty) return false;
+      }
+    } else if (z) {
+      List<int> rows = placedLetters.map((e) => e.row).toList()..sort();
+      int startRow = rows.first;
+      int endRow = rows.last;
+      int startCol = startRow - (placedLetters[0].row - placedLetters[0].col);
+
+      for (int i = 0; i <= (endRow - startRow); i++) {
+        if (board[startRow + i][startCol + i].letter.isEmpty) return false;
+      }
+    }
+    return true;
+  }
+
+  bool WordListedeVarMi(String word) {
+    if (!word.contains('JOKER')) {
+      return word.length >= 1 && _letterListService.isWord(word);
+    }
+    final kombinasyonlar = jokerWord(word);
+    for (var alternatif in kombinasyonlar) {
+      if (_letterListService.isWord(alternatif)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  int fullWordScore({
+    required List<UserPlayLetter> placedLetters,
+    required List<List<Cell>> board,
+    required List<List<int>> bonusMatrix,
+    required Map<String, int> letterPoints,
+  }) {
+    if (placedLetters.isEmpty) return 0;
+
     bool isRow = placedLetters.every((e) => e.row == placedLetters[0].row);
     bool isCol = placedLetters.every((e) => e.col == placedLetters[0].col);
-    if (!isRow && !isCol) return "";
+    if (!isRow && !isCol) return 0;
 
     int fixed = isRow ? placedLetters[0].row : placedLetters[0].col;
     int start = placedLetters
@@ -42,13 +222,13 @@ class WordService {
         .map((e) => isRow ? e.col : e.row)
         .reduce((a, b) => a > b ? a : b);
 
-    // Genişlet tahtadan: soldan/üstten başla, sağa/aşağı git
     while (start > 0 &&
         (isRow
             ? board[fixed][start - 1].letter.isNotEmpty
             : board[start - 1][fixed].letter.isNotEmpty)) {
       start--;
     }
+
     while (end < 14 &&
         (isRow
             ? board[fixed][end + 1].letter.isNotEmpty
@@ -56,75 +236,30 @@ class WordService {
       end++;
     }
 
-    String word = "";
-    for (int i = start; i <= end; i++) {
-      final cell = isRow ? board[fixed][i] : board[i][fixed];
-      if (cell.letter.isEmpty) return "";
-      word += cell.letter;
-    }
-
-    return word;
-  }
-
-  bool isContiguousWord(
-      List<UserPlayLetter> placedLetters, List<List<Cell>> board) {
-    if (placedLetters.isEmpty) return false;
-
-    bool isRow = placedLetters.every((e) => e.row == placedLetters[0].row);
-    bool isCol = placedLetters.every((e) => e.col == placedLetters[0].col);
-
-    if (!isRow && !isCol) return false;
-
-    int fixed = isRow ? placedLetters[0].row : placedLetters[0].col;
-    List<int> indexes =
-        placedLetters.map((e) => isRow ? e.col : e.row).toList();
-    indexes.sort();
-
-    int start = indexes.first;
-    int end = indexes.last;
+    int totalScore = 0;
+    int wordMultiplier = 1;
 
     for (int i = start; i <= end; i++) {
       final cell = isRow ? board[fixed][i] : board[i][fixed];
-      if (cell.letter.isEmpty) {
-        return false;
+      final letter = cell.letter;
+      final score = letterPoints[letter.toUpperCase()] ?? 0;
+
+      bool isNew =
+          placedLetters.any((p) => p.row == cell.row && p.col == cell.col);
+      int bonus = bonusMatrix[cell.row][cell.col];
+
+      int letterScore = score;
+      if (isNew) {
+        if (bonus == 2) letterScore *= 2;
+        if (bonus == 3) letterScore *= 3;
+        if (bonus == 4) wordMultiplier *= 2;
+        if (bonus == 5) wordMultiplier *= 3;
       }
+
+      totalScore += letterScore;
     }
 
-    return true;
-  }
-
-  String getGamerCreateWord(List<UserPlayLetter> placedLetters) {
-    if (placedLetters.isEmpty) {
-      return '';
-    }
-    bool isX = placedLetters.every((x) => x.row == placedLetters[0].row);
-    bool isY = placedLetters.every((y) => y.col == placedLetters[0].col);
-
-    bool isZ = true;
-    final rowDiff = placedLetters[0].row - placedLetters[0].col;
-    for (var e in placedLetters) {
-      if (e.row - e.col != rowDiff) {
-        isZ = false;
-        break;
-      }
-    }
-    if (!isX && !isY && !isZ) {
-      return '';
-    }
-    List<UserPlayLetter> sorted = [...placedLetters];
-    if (isX) {
-      sorted.sort((a, b) => a.col.compareTo(b.col));
-    } else if (isY) {
-      sorted.sort((a, b) => a.row.compareTo(b.row));
-    } else if (isZ) {
-      sorted.sort((a, b) => a.col.compareTo(b.col));
-    }
-
-    return sorted.map((e) => e.letter).join();
-  }
-
-  bool isPlacedWordValid(String word) {
-    return word.length >= 2 && _letterListService.isWord(word);
+    return totalScore * wordMultiplier;
   }
 
   int gamerBonusScore(
@@ -172,7 +307,8 @@ class WordService {
         const Offset(0, -1),
         const Offset(-1, 0),
         const Offset(1, 0),
-        const Offset(0, 1)
+        const Offset(0, 1),
+        const Offset(1, 1), 
       ];
 
       for (var w in ways) {
@@ -195,5 +331,31 @@ class WordService {
       }
     }
     return false;
+  }
+
+  List<String> jokerWord(String kelime) {
+    const alfabe = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ';
+    List<String> sonuc = [];
+
+    void olustur(String suanki, int index) {
+      if (index >= kelime.length) {
+        print("✅ Alternatif kelime: $suanki");
+        sonuc.add(suanki);
+        return;
+      }
+
+      String parca = kelime.substring(index);
+      if (parca.startsWith("JOKER")) {
+        for (var harf in alfabe.split('')) {
+          print("🔁 JOKER yerine '$harf' deniyoruz...");
+          olustur(suanki + harf, index + 5);
+        }
+      } else {
+        olustur(suanki + kelime[index], index + 1);
+      }
+    }
+
+    olustur('', 0);
+    return sonuc;
   }
 }

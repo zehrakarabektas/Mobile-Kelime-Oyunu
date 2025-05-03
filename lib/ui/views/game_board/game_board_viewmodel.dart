@@ -8,7 +8,6 @@ import 'package:yazlab2proje2kelimeoyunumobil/app/app.router.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/app/app.locator.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/services/game_service.dart';
 import '../../../services/user_service.dart';
-import '../../../services/letter_list_service.dart';
 import '../../../services/word_service.dart';
 import 'package:signalr_netcore/signalr_client.dart';
 
@@ -24,6 +23,8 @@ class Cell {
 
   bool isWord = false;
   bool isClosed = false;
+  bool isLast = false;
+
   Cell({
     this.letterId,
     this.letter = '',
@@ -33,6 +34,7 @@ class Cell {
     this.hasReward = false,
     this.isWord = false,
     this.isClosed = false,
+    this.isLast = false,
     required this.row,
     required this.col,
   });
@@ -56,7 +58,7 @@ class UserPlayLetter {
 
 class GameBoardViewModel extends BaseViewModel {
   final _navigationService = locator<NavigationService>();
-  final _letterListService = LetterListService();
+  //final _letterListService = LetterListService();
   final _userService = locator<UserService>();
   final _gameService = locator<GameService>();
   late HubConnection _hubConnect;
@@ -132,8 +134,9 @@ class GameBoardViewModel extends BaseViewModel {
         );
       }
       initializeBoard();
-      applyPermanentLettersToBoard();
+      gamesLettersToBoard();
       await fetchGamerLetters();
+      await fetchUserRewards();
     } catch (e) {
       debugPrint("fetchGameData hatası: $e");
     }
@@ -358,7 +361,26 @@ class GameBoardViewModel extends BaseViewModel {
     }
   }
 
+  Future<void> fetchUserRewards() async {
+    final gameId = _gameService.gameId;
+    try {
+      final rewards = await _gameService.getActiveRewards(gameId!, userId!);
+      aktifOdulSay = {
+        'ekstraHamle': rewards['EkstraHamleJokeri'] ?? 0,
+        'bolgeYasagi': rewards['BolgeYasagi'] ?? 0,
+        'harfYasagi': rewards['HarfYasagi'] ?? 0,
+      };
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Ödüller alınamadı: $e");
+    }
+  }
+
   Future<void> userPassTurn() async {
+    if (isSendWordGamer) {
+      debugPrint("Kelime gönderilirken pas geçilemez.");
+      return;
+    }
     final userId = _userService.userId;
     final gameId = _gameService.gameId;
 
@@ -392,6 +414,10 @@ class GameBoardViewModel extends BaseViewModel {
   }
 
   Future<void> userSurrender() async {
+    if (isSendWordGamer) {
+      debugPrint("Kelime gönderilirken teslim geçilemez.");
+      return;
+    }
     final userId = _userService.userId;
     final gameId = _gameService.gameId;
 
@@ -441,6 +467,11 @@ class GameBoardViewModel extends BaseViewModel {
       isGamer1 ? _gameService.gamer1PassCount : _gameService.gamer2PassCount;
   String get leftTimeString => _gameService.leftTimeString;
   int? get turnUserId => _gameService.turnGamerId;
+  Map<String, int> aktifOdulSay = {
+    'ekstraHamle': 0,
+    'bolgeYasagi': 0,
+    'harfYasagi': 0,
+  };
 
   Timer? _timer;
 
@@ -460,9 +491,13 @@ class GameBoardViewModel extends BaseViewModel {
 
       notifyListeners();
 
-      if (_gameService.leftTime.inSeconds <= 0) {
+      if (_gameService.leftTime.inSeconds <= 0 &&
+          isSendWordGamer != true &&
+          turnUserId == userId) {
         _timer?.cancel();
         print("⏰ Süre doldu, timer durdu.");
+        unawaited(finishGameTime());
+        return;
       }
     });
   }
@@ -473,131 +508,69 @@ class GameBoardViewModel extends BaseViewModel {
     super.dispose();
   }
 
-  /*bool isFirstGamerMove() {
-    if (_gameService.gameCell.isNotEmpty) return false;
-    return placeLetterList.any((pos) => pos.dx == 7 && pos.dy == 7);
-  }
-
-  bool isConnectedToExistingLetters() {
-    if (_gameService.gameCell.isEmpty) return true;
-
-    for (final letter in placeLetterList) {
-      int x = letter.dx.toInt();
-      int y = letter.dy.toInt();
-
-      final neighbors = [
-        Offset(x - 1.0, y.toDouble()),
-        Offset(x + 1.0, y.toDouble()),
-        Offset(x.toDouble(), y - 1.0),
-        Offset(x.toDouble(), y + 1.0),
-      ];
-
-      for (final i in neighbors) {
-        int neighborx = i.dx.toInt();
-        int neighbory = i.dy.toInt();
-        if (neighborx < 0 ||
-            neighborx >= boardSize ||
-            neighbory < 0 ||
-            neighbory >= boardSize) continue;
-        if (board[neighbory][neighborx].letter.isNotEmpty &&
-            !placeLetterList.contains(i)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  String getUserCreateWord() {
-    if (placedLetters.isEmpty) return '';
-
-    bool isX = placedLetters.every((x) => x.row == placedLetters[0].row);
-    bool isY = placedLetters.every((y) => y.col == placedLetters[0].col);
-
-    bool isZ = true;
-    final rowDiff = placedLetters[0].row - placedLetters[0].col;
-    for (var e in placedLetters) {
-      if (e.row - e.col != rowDiff) {
-        isZ = false;
-        break;
-      }
-    }
-
-    if (!isX && !isY && !isZ) return '';
-    List<UserPlayLetter> sorted = [...placedLetters];
-    if (isX) {
-      sorted.sort((a, b) => a.col.compareTo(b.col));
-    } else if (isY) {
-      sorted.sort((a, b) => a.row.compareTo(b.row));
-    } else if (isZ) {
-      sorted.sort((a, b) => a.col.compareTo(b.col));
-    }
-
-    return sorted.map((e) => e.letter).join();
-  }
-
-  bool isPlacedWordValid() {
-    final word = getUserCreateWord();
-    return word.length >= 2 && _letterListService.isWord(word);
-  }
-
-  int calculateBonusScore(List<UserPlayLetter> placedLetters) {
-    int baseScore = 0;
-    int wordMultiplier = 1;
-
-    for (var letter in placedLetters) {
-      final int row = letter.row;
-      final int col = letter.col;
-      final int bonus = bonusMatrix[row][col];
-
-      int letterScore = letter.score;
-
-      if (bonus == 2) {
-        letterScore *= 2;
-      } else if (bonus == 3) {
-        letterScore *= 3;
-      } else if (bonus == 4) {
-        wordMultiplier *= 2;
-      } else if (bonus == 5) {
-        wordMultiplier *= 3;
-      }
-
-      baseScore += letterScore;
-    }
-
-    return baseScore * wordMultiplier;
-  }*/
-
   final _wordService = WordService();
-  String getUserCreateWord() => _wordService.getGamerCreateWord(placedLetters);
+  bool isSendWordTrue = false;
+
+  String getUserCreateWord() =>
+      _wordService.getUserFullWord(placedLetters, board);
   bool isPlacedWordValid() =>
-      _wordService.isPlacedWordValid(getUserCreateWord());
+      _wordService.WordListedeVarMi(getUserCreateWord());
   int gamerBonusScore() =>
       _wordService.gamerBonusScore(placedLetters, bonusMatrix);
+  int gamerFullWordScore() => _wordService.fullWordScore(
+        placedLetters: placedLetters,
+        board: board,
+        bonusMatrix: bonusMatrix,
+        letterPoints: letterPoints,
+      );
+
   bool isFirstGamerMove() => _wordService.isFirstWord(_gameService.gameCell);
   bool isCorrectPlaced() =>
       _wordService.isCorrectPlaced(placeLetterList, board);
 
   void updatePlacedLetterColors() {
+    for (var row in board) {
+      for (var cell in row) {
+        if (!cell.isClosed) {
+          cell.isWord = false;
+          cell.isLast = false;
+        }
+      }
+    }
+
     final isMiddleOk =
         _wordService.isMiddleCell(_gameService.gameCell, placeLetterList);
     final isCorrect = isCorrectPlaced();
-    final fullWord = _wordService.getFullWordFromBoard(placedLetters, board);
-    final isValid = _wordService.isPlacedWordValid(fullWord);
-    final isContiguous = _wordService.isContiguousWord(placedLetters, board);
+    final fullWord = _wordService.getUserFullWord(placedLetters, board);
+    final isValid = _wordService.WordListedeVarMi(fullWord);
+    final birlesik = _wordService.WorddeBoslukVarMi(placedLetters, board);
+    final isFirstMove = isFirstGamerMove();
+
     print("🔍 Kelime: $fullWord");
     print("📌 isValid (sözlükte var mı): $isValid");
     print("📌 isCorrect (bağlantılı mı): $isCorrect");
     print("📌 isMiddleOk (yıldızda mı): $isMiddleOk");
-    print("📌 isContiguous (bitişik mi): $isContiguous");
-    print("📌 isFirstMove: ${isFirstGamerMove()}");
-    final isAccepted =
-        (isFirstGamerMove() && isValid && isMiddleOk && isContiguous) ||
-            (!isFirstGamerMove() && isValid && isCorrect && isContiguous);
+    print("📌 Birleşik mi harfler: $birlesik");
+    print("📌 isFirstMove: $isFirstMove");
+    print("✅ Koyulan harflerin skoru: ${gamerBonusScore()}");
+    print("✅ Toplam kelime skoru: ${gamerFullWordScore()}");
+
+    final isAccepted = (isFirstMove && isValid && isMiddleOk && birlesik) ||
+        (!isFirstMove && isValid && isCorrect && birlesik);
+
+    isSendWordTrue = isAccepted;
     print("✅ Kabul Edildi mi: $isAccepted");
 
-    for (var l in placedLetters) {
-      board[l.row][l.col].isWord = isAccepted;
+    if (isAccepted) {
+      for (int i = 0; i < placedLetters.length; i++) {
+        var l = placedLetters[i];
+        board[l.row][l.col].isWord = true;
+        board[l.row][l.col].isLast = false;
+
+        if (i == placedLetters.length - 1) {
+          board[l.row][l.col].isLast = true;
+        }
+      }
     }
 
     notifyListeners();
@@ -605,6 +578,11 @@ class GameBoardViewModel extends BaseViewModel {
 
   bool isSendWordGamer = false;
   Future<void> sendWordButton() async {
+    if (!isSendWordTrue) {
+      debugPrint("❌ Kelime kabul edilmediği için gönderilmiyor.");
+      return;
+    }
+
     if (isSendWordGamer) return;
     isSendWordGamer = true;
     notifyListeners();
@@ -613,7 +591,7 @@ class GameBoardViewModel extends BaseViewModel {
     final gameId = int.parse(_gameService.gameId!);
 
     final wordScore = placedLetters.fold(0, (sum, l) => sum + l.score);
-    final bonusScore = gamerBonusScore();
+    final bonusScore = gamerFullWordScore();
 
     final payload = {
       "gameId": gameId,
@@ -650,6 +628,35 @@ class GameBoardViewModel extends BaseViewModel {
     }
   }
 
+  Future<void> finishGameTime() async {
+    final userId = _userService.userId;
+    final gameId = _gameService.gameId;
+
+    if (userId == null || gameId == null || turnUserId != userId) return;
+    final url = Uri.parse("http://192.168.1.178:7109/api/Game/oyun-bitir");
+
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(
+            {"gameId": int.parse(gameId), "finishType": "zamanasimi"}),
+      );
+
+      if (response.statusCode == 200) {
+        debugPrint("🛑 Oyun zaman aşımı ile bitti: ${response.body}");
+        gameOver = true;
+        gameOverMessage = "Süre doldu. Oyun sona erdi.";
+        notifyListeners();
+      } else {
+        debugPrint(
+            "Oyun bitirme başarısız: ${response.statusCode} - ${response.body}");
+      }
+    } catch (e) {
+      debugPrint("Oyun bitirme hatası: $e");
+    }
+  }
+
   String? gameOverMessage;
   bool gameOver = false;
 
@@ -669,7 +676,7 @@ class GameBoardViewModel extends BaseViewModel {
     notifyListeners();
   }
 
-  void applyPermanentLettersToBoard() {
+  void gamesLettersToBoard() {
     final cells = _gameService.gameCell;
     for (var cell in cells) {
       final row = cell['row'];
@@ -679,7 +686,7 @@ class GameBoardViewModel extends BaseViewModel {
       board[row][col].letter = letter;
       board[row][col].score = getLetterPoint(letter);
       board[row][col].isClosed = true;
-      board[row][col].isWord = true; // opsiyonel: renk/stil farkı için
+      board[row][col].isWord = false;
     }
   }
 }

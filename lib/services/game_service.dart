@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:stacked/stacked.dart';
 
@@ -87,9 +88,12 @@ class GameService with ListenableServiceMixin {
       gamer2PassCount: game['gamer2PassCount'] ?? 0,
       gameLetterCount: game['gameLetterCount'] ?? 86,
       gameCell: game['gameCell'] ?? [],
-      startTime: DateTime.tryParse(game['startTime'] ?? "")?.toUtc() ?? DateTime.now().toUtc(),
-      lastMoveTime: DateTime.tryParse(game['lastMoveTime'] ?? "")?.toUtc() ?? DateTime.now().toUtc(),
-      serverNow: DateTime.tryParse(game['serverNow'] ?? "")?.toUtc() ?? DateTime.now().toUtc(),
+      startTime: DateTime.tryParse(game['startTime'] ?? "")?.toUtc() ??
+          DateTime.now().toUtc(),
+      lastMoveTime: DateTime.tryParse(game['lastMoveTime'] ?? "")?.toUtc() ??
+          DateTime.now().toUtc(),
+      serverNow: DateTime.tryParse(game['serverNow'] ?? "")?.toUtc() ??
+          DateTime.now().toUtc(),
       gameSeconds: game['gameSeconds'] ?? 0,
       winnerGamerId: game['winnerGamerId'],
       isDraw: game['isDraw'] ?? false,
@@ -136,7 +140,7 @@ class GameService with ListenableServiceMixin {
 
   Duration get leftTime {
     final now = serverNow ?? DateTime.now().toUtc();
-    final lastTime = now.difference(lastMoveTime!);   
+    final lastTime = now.difference(lastMoveTime!);
     final remaining = Duration(seconds: gameSeconds) - lastTime;
     /*print("server:$serverNow");
     print("last:$lastMoveTime");
@@ -166,7 +170,7 @@ class GameService with ListenableServiceMixin {
       formatted = "$mStr:$sStr";
     }
 
-   // print("leftTimeString: $formatted");
+    // print("leftTimeString: $formatted");
     return formatted;
   }
 
@@ -194,6 +198,21 @@ class GameService with ListenableServiceMixin {
       );
     } catch (e) {
       print("Oyun bitirilemedi: $e");
+    }
+  }
+
+  Future<Map<String, int>> getActiveRewards(String gameId, int userId) async {
+    final url =
+        Uri.parse("http://192.168.1.178:7109/api/GamerRewards/aktif-odul");
+
+    final response = await http.get(url);
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final oduller = Map<String, int>.from(data['gamerActiveRewards']);
+      return oduller;
+    } else {
+      throw Exception('Aktif ödüller alınamadı: ${response.statusCode}');
     }
   }
 }

@@ -36,8 +36,8 @@ class CompleteGameView extends StackedView<CompleteGameViewModel> {
                     itemCount: viewModel.bitenOyunlar.length,
                     itemBuilder: (context, index) {
                       final oyun = viewModel.bitenOyunlar[index];
-                      final bool kazanildi = oyun.kendiPuani > oyun.rakipPuani;
-                      final bool berabere = oyun.kendiPuani == oyun.rakipPuani;
+                      final bool kazanildi = oyun.isWinnerGamer;
+                      final bool berabere = oyun.isDraw;
 
                       return Padding(
                         padding: const EdgeInsets.only(bottom: 8),

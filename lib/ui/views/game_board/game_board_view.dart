@@ -38,6 +38,12 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                     int row = index ~/ viewModel.boardSize;
                     int col = index % viewModel.boardSize;
                     final cell = viewModel.board[row][col];
+                    if (cell.isClosed == true) {
+                      return Padding(
+                        padding: const EdgeInsets.all(1),
+                        child: buildClosedTile(cell.letter, cell.score),
+                      );
+                    }
 
                     return DragTarget<Map<String, dynamic>>(
                       onAcceptWithDetails: (details) {
@@ -57,46 +63,8 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                               row, col, character, score, letterId);
                         }
 
-                        /*final newWord = viewModel.getUserCreateWord();
-                        final isValid = viewModel.isPlacedWordValid();
-                        debugPrint("🧩 Yeni kelime: $newWord");
-                        debugPrint("✅ Geçerli mi: $isValid");*/
-
                         viewModel.notifyListeners();
                       },
-                      /* onAcceptWithDetails: (details) {
-                        final incomingData = details.data;
-                        final character = incomingData['character'];
-                        final letterId = incomingData['letterId'];
-                        final score = incomingData["score"];
-
-                       if (incomingData.containsKey('fromRow') &&
-                            incomingData.containsKey('fromCol')) {
-                          final fromRow = incomingData['fromRow'];
-                          final fromCol = incomingData['fromCol'];
-
-                          if (viewModel.board[row][col].letter.isEmpty) {
-                            viewModel.board[fromRow][fromCol].letter = '';
-
-                            viewModel.placeLetter(
-                                row, col, character, score, letterId);
-
-                            viewModel.notifyListeners();
-                          }
-                        } else {
-                          if (viewModel.board[row][col].letter.isEmpty) {
-                            if (!viewModel.usedLetterIndexes
-                                .contains(letterId)) {
-                              viewModel.usedLetterIndexes.add(letterId);
-                            }
-
-                            viewModel.placeLetter(
-                                row, col, character, score, letterId);
-
-                            viewModel.notifyListeners();
-                          }
-                        }
-                      },*/
                       builder: (context, candidateData, rejectedData) {
                         return Container(
                           margin: const EdgeInsets.all(1),
@@ -126,9 +94,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                                           viewModel.placedLetters.any(
                                         (e) => e.row == row && e.col == col,
                                       );
-                                      final isValid = isPlaced
-                                          ? viewModel.isPlacedWordValid()
-                                          : true;
+                                      final isValid = cell.isWord;
 
                                       return Draggable<Map<String, dynamic>>(
                                         data: {
@@ -179,11 +145,12 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
+            buildBonusBar(viewModel),
             buildLetterBar(viewModel),
-            const SizedBox(height: 24),
+            const SizedBox(height: 12),
             buildControlBar(viewModel),
-            const SizedBox(height: 6),
+            const SizedBox(height: 2),
           ],
         ),
       ),
@@ -199,6 +166,8 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
   void onViewModelReady(GameBoardViewModel viewModel) {
     viewModel.initializeBoard();
     viewModel.fetchGamerLetters();
+    viewModel.fetchUserRewards();
+    viewModel.gamesLettersToBoard();
     viewModel.initSignalR();
     if (viewModel.turnUserId == viewModel.userId) {
       viewModel.startTimer();
@@ -394,6 +363,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
   }
 
   Widget buildLetterTile(String letter, int score, {bool shadow = false}) {
+    final isJoker = letter.toUpperCase() == 'JOKER';
     return Container(
       width: 50,
       height: 50,
@@ -426,18 +396,23 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
             ),
           ),
           Center(
-            child: Text(
-              letter,
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF3B2F2F),
-                shadows: [
-                  Shadow(
-                      color: Colors.white, blurRadius: 4, offset: Offset(1, 1))
-                ],
-              ),
-            ),
+            child: isJoker
+                ? Image.asset('lib/assets/images/joker.png',
+                    width: 32, height: 32)
+                : Text(
+                    letter,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF3B2F2F),
+                      shadows: [
+                        Shadow(
+                            color: Colors.white,
+                            blurRadius: 4,
+                            offset: Offset(1, 1))
+                      ],
+                    ),
+                  ),
           ),
           Positioned(
             top: 4,
@@ -606,7 +581,7 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.red,
+                color: const Color.fromARGB(255, 182, 0, 0),
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
@@ -686,6 +661,149 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget buildClosedTile(String letter, int point) {
+    return Container(
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(6),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFFFF5E0),
+            Color(0xFFEFE2CC),
+            Color(0xFFD4BA96),
+            Color.fromARGB(255, 180, 153, 118),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          stops: [0.0, 0.35, 0.7, 1.0],
+        ),
+        border: Border.all(
+          color: Colors.grey.shade300,
+          width: 1.2,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 2,
+            offset: const Offset(1, 1),
+          ),
+        ],
+      ),
+      child: Stack(
+        children: [
+          Center(
+            child: Text(
+              letter,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF3B2F2F),
+                shadows: [
+                  Shadow(
+                    color: Colors.white,
+                    blurRadius: 2,
+                    offset: Offset(1, 1),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: Text(
+              point.toString(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: Colors.black54,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget buildBonusBar(GameBoardViewModel viewModel) {
+    final oduller = viewModel.aktifOdulSay;
+    final bonuses = [
+      {
+        'type': 'ekstraHamle',
+        'imagePath': 'lib/assets/images/ekstrahamle2.png',
+        'count': oduller['ekstraHamle'] ?? 0,
+      },
+      {
+        'type': 'bolgeYasagi',
+        'imagePath': 'lib/assets/images/bolgeyasagi2.png',
+        'count': oduller['bolgeYasagi'] ?? 0,
+      },
+      {
+        'type': 'harfYasagi',
+        'imagePath': 'lib/assets/images/harfyasagi2.png',
+        'count': oduller['harfYasagi'] ?? 0,
+      },
+    ];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: bonuses.map((bonus) {
+          final int count = bonus['count'] as int;
+          final String imagePath = bonus['imagePath'] as String;
+          final bool isDisabled = count == 0;
+
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Stack(
+              alignment: Alignment.topRight,
+              children: [
+                Opacity(
+                  opacity: isDisabled ? 0.4 : 1.0,
+                  child: Image.asset(
+                    imagePath,
+                    width: 70,
+                    height: 40,
+                  ),
+                ),
+                Positioned(
+                  right: -4,
+                  top: -4,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isDisabled
+                          ? Colors.grey
+                          : const Color.fromARGB(255, 182, 0, 0),
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          blurRadius: 3,
+                          offset: const Offset(1, 1),
+                        )
+                      ],
+                    ),
+                    child: Text(
+                      count.toString(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        }).toList(),
       ),
     );
   }
