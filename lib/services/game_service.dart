@@ -202,8 +202,8 @@ class GameService with ListenableServiceMixin {
   }
 
   Future<Map<String, int>> getActiveRewards(String gameId, int userId) async {
-    final url =
-        Uri.parse("http://192.168.1.178:7109/api/GamerRewards/aktif-odul");
+    final url = Uri.parse(
+        "http://192.168.1.178:7109/api/GamerRewards/aktif-odul?gameId=$gameId&userId=$userId");
 
     final response = await http.get(url);
 

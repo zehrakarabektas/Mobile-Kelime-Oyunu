@@ -363,8 +363,10 @@ class GameBoardViewModel extends BaseViewModel {
 
   Future<void> fetchUserRewards() async {
     final gameId = _gameService.gameId;
+    final userId = _userService.userId;
     try {
       final rewards = await _gameService.getActiveRewards(gameId!, userId!);
+      debugPrint("Gelen ödüller: $rewards");
       aktifOdulSay = {
         'ekstraHamle': rewards['EkstraHamleJokeri'] ?? 0,
         'bolgeYasagi': rewards['BolgeYasagi'] ?? 0,
