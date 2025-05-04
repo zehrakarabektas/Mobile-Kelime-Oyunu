@@ -195,94 +195,139 @@ class WordService {
   int fullWordScore({
     required List<UserPlayLetter> placedLetters,
     required List<List<Cell>> board,
+    required Map<String, int> letterPoints,
+  }) {
+    final word = getUserFullWord(placedLetters, board);
+    if (word.isEmpty) return 0;
+
+    return word
+        .split('')
+        .map((c) => letterPoints[c.toUpperCase()] ?? 0)
+        .reduce((a, b) => a + b);
+  }
+
+  int fullWordBonusScore({
+    required List<UserPlayLetter> placedLetters,
+    required List<List<Cell>> board,
     required List<List<int>> bonusMatrix,
     required Map<String, int> letterPoints,
   }) {
     if (placedLetters.isEmpty) return 0;
 
+    final word = getUserFullWord(placedLetters, board);
+    if (word.isEmpty) return 0;
+
     bool isRow = placedLetters.every((e) => e.row == placedLetters[0].row);
     bool isCol = placedLetters.every((e) => e.col == placedLetters[0].col);
-    if (!isRow && !isCol) return 0;
+    bool isDiag = placedLetters.every((e) =>
+        (e.row - e.col) == (placedLetters[0].row - placedLetters[0].col));
 
-    int fixed = isRow ? placedLetters[0].row : placedLetters[0].col;
-    int start = placedLetters
-        .map((e) => isRow ? e.col : e.row)
-        .reduce((a, b) => a < b ? a : b);
-    int end = placedLetters
-        .map((e) => isRow ? e.col : e.row)
-        .reduce((a, b) => a > b ? a : b);
-
-    while (start > 0 &&
-        (isRow
-            ? board[fixed][start - 1].letter.isNotEmpty
-            : board[start - 1][fixed].letter.isNotEmpty)) {
-      start--;
-    }
-
-    while (end < 14 &&
-        (isRow
-            ? board[fixed][end + 1].letter.isNotEmpty
-            : board[end + 1][fixed].letter.isNotEmpty)) {
-      end++;
-    }
+    if (!isRow && !isCol && !isDiag) return 0;
 
     int totalScore = 0;
     int wordMultiplier = 1;
 
-    for (int i = start; i <= end; i++) {
-      final cell = isRow ? board[fixed][i] : board[i][fixed];
+    if (isRow) {
+      int row = placedLetters[0].row;
 
-      UserPlayLetter? placed;
-      for (var p in placedLetters) {
-        if (p.row == cell.row && p.col == cell.col) {
-          placed = p;
-          break;
+      int startCol =
+          placedLetters.map((e) => e.col).reduce((a, b) => a < b ? a : b);
+      int endCol =
+          placedLetters.map((e) => e.col).reduce((a, b) => a > b ? a : b);
+
+      while (startCol > 0 && board[row][startCol - 1].letter.isNotEmpty)
+        startCol--;
+      while (endCol < 14 && board[row][endCol + 1].letter.isNotEmpty) endCol++;
+
+      for (int col = startCol; col <= endCol; col++) {
+        final cell = board[row][col];
+        final isNew = placedLetters.any((p) => p.row == row && p.col == col);
+        final letter = cell.letter;
+        int score = letterPoints[letter.toUpperCase()] ?? 0;
+
+        if (isNew) {
+          final bonus = bonusMatrix[row][col];
+          if (bonus == 2) score *= 2;
+          if (bonus == 3) score *= 3;
+          if (bonus == 4) wordMultiplier *= 2;
+          if (bonus == 5) wordMultiplier *= 3;
         }
+
+        totalScore += score;
+      }
+    } else if (isCol) {
+      int col = placedLetters[0].col;
+
+      int startRow =
+          placedLetters.map((e) => e.row).reduce((a, b) => a < b ? a : b);
+      int endRow =
+          placedLetters.map((e) => e.row).reduce((a, b) => a > b ? a : b);
+
+      while (startRow > 0 && board[startRow - 1][col].letter.isNotEmpty)
+        startRow--;
+      while (endRow < 14 && board[endRow + 1][col].letter.isNotEmpty) endRow++;
+
+      for (int row = startRow; row <= endRow; row++) {
+        final cell = board[row][col];
+        final isNew = placedLetters.any((p) => p.row == row && p.col == col);
+        final letter = cell.letter;
+        int score = letterPoints[letter.toUpperCase()] ?? 0;
+
+        if (isNew) {
+          final bonus = bonusMatrix[row][col];
+          if (bonus == 2) score *= 2;
+          if (bonus == 3) score *= 3;
+          if (bonus == 4) wordMultiplier *= 2;
+          if (bonus == 5) wordMultiplier *= 3;
+        }
+
+        totalScore += score;
+      }
+    } else if (isDiag) {
+      int minRow =
+          placedLetters.map((e) => e.row).reduce((a, b) => a < b ? a : b);
+      int minCol =
+          placedLetters.map((e) => e.col).reduce((a, b) => a < b ? a : b);
+      int maxRow =
+          placedLetters.map((e) => e.row).reduce((a, b) => a > b ? a : b);
+      int maxCol =
+          placedLetters.map((e) => e.col).reduce((a, b) => a > b ? a : b);
+
+      while (minRow > 0 &&
+          minCol > 0 &&
+          board[minRow - 1][minCol - 1].letter.isNotEmpty) {
+        minRow--;
+        minCol--;
       }
 
-      final letter = placed?.letter ?? cell.letter;
-      final score = placed?.score ?? (letterPoints[letter.toUpperCase()] ?? 0);
-
-      final bonus = bonusMatrix[cell.row][cell.col];
-      int letterScore = score;
-
-      if (placed != null) {
-        if (bonus == 2) letterScore *= 2;
-        if (bonus == 3) letterScore *= 3;
-        if (bonus == 4) wordMultiplier *= 2;
-        if (bonus == 5) wordMultiplier *= 3;
+      while (maxRow < 14 &&
+          maxCol < 14 &&
+          board[maxRow + 1][maxCol + 1].letter.isNotEmpty) {
+        maxRow++;
+        maxCol++;
       }
 
-      totalScore += letterScore;
+      for (int i = 0; i <= maxRow - minRow; i++) {
+        int row = minRow + i;
+        int col = minCol + i;
+        final cell = board[row][col];
+        final isNew = placedLetters.any((p) => p.row == row && p.col == col);
+        final letter = cell.letter;
+        int score = letterPoints[letter.toUpperCase()] ?? 0;
+
+        if (isNew) {
+          final bonus = bonusMatrix[row][col];
+          if (bonus == 2) score *= 2;
+          if (bonus == 3) score *= 3;
+          if (bonus == 4) wordMultiplier *= 2;
+          if (bonus == 5) wordMultiplier *= 3;
+        }
+
+        totalScore += score;
+      }
     }
 
     return totalScore * wordMultiplier;
-  }
-
-  int gamerBonusScore(
-      List<UserPlayLetter> placedLetters, List<List<int>> bonusMatrix) {
-    int bonusScore = 0;
-    int wordMux = 1;
-
-    for (var letter in placedLetters) {
-      final int row = letter.row;
-      final int col = letter.col;
-      final int bonus = bonusMatrix[row][col];
-
-      int letterScore = letter.score;
-
-      if (bonus == 2) {
-        letterScore *= 2;
-      } else if (bonus == 3) {
-        letterScore *= 3;
-      } else if (bonus == 4) {
-        wordMux *= 2;
-      } else if (bonus == 5) {
-        wordMux *= 3;
-      }
-      bonusScore += letterScore;
-    }
-    return bonusScore * wordMux;
   }
 
   bool isFirstWord(List<dynamic> gameCell) => gameCell.isEmpty;

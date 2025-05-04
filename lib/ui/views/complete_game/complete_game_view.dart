@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
+import 'package:yazlab2proje2kelimeoyunumobil/ui/dialogs/info_alert/result_game.dart';
 import 'dart:ui';
 import 'complete_game_viewmodel.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/app/app.router.dart';
@@ -63,6 +64,18 @@ class CompleteGameView extends StackedView<CompleteGameViewModel> {
                                   border: Border.all(color: Colors.white24),
                                 ),
                                 child: ListTile(
+                                  onTap: () async {
+                                    final result =
+                                        await viewModel.fetchGameResult(oyun
+                                            .gameId); 
+                                    if (result != null && context.mounted) {
+                                      showDialog(
+                                        context: context,
+                                        builder: (ctx) =>
+                                            GameResultDialog(oyun: result),
+                                      );
+                                    }
+                                  },
                                   leading: CircleAvatar(
                                     backgroundColor: const Color(0xFF2C1655),
                                     child: Text(

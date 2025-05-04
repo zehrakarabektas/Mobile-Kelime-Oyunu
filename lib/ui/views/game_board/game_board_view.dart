@@ -2,6 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:stacked/stacked.dart';
 import 'package:flutter/services.dart';
+import 'package:yazlab2proje2kelimeoyunumobil/ui/dialogs/info_alert/result_game.dart';
 import 'game_board_viewmodel.dart';
 
 class GameBoardView extends StackedView<GameBoardViewModel> {
@@ -13,6 +14,21 @@ class GameBoardView extends StackedView<GameBoardViewModel> {
     GameBoardViewModel viewModel,
     Widget? child,
   ) {
+    if (viewModel.GameResultPopup && !viewModel.popupShown) {
+      viewModel.popupShown = true;
+
+      Future.microtask(() async {
+        final result = await viewModel.fetchGameResult();
+        if (result != null && context.mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (_) => GameResultDialog(oyun: result),
+          );
+        }
+      });
+    }
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
         statusBarColor: Colors.transparent,

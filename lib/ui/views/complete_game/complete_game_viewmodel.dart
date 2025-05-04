@@ -4,8 +4,10 @@ import 'dart:convert';
 import '../../../app/app.locator.dart';
 import '../../../services/user_service.dart';
 import 'package:signalr_netcore/signalr_client.dart';
+import 'package:yazlab2proje2kelimeoyunumobil/ui/dialogs/info_alert/result_game.dart';
 
 class Oyun {
+  final int gameId;
   final String rakipAdi;
   final int kendiPuani;
   final int rakipPuani;
@@ -14,7 +16,8 @@ class Oyun {
   final bool isDraw;
 
   Oyun(
-      {required this.rakipAdi,
+      {required this.gameId,
+      required this.rakipAdi,
       required this.kendiPuani,
       required this.rakipPuani,
       required this.tarih,
@@ -22,6 +25,7 @@ class Oyun {
       required this.isDraw});
   factory Oyun.fromJson(Map<String, dynamic> json) {
     return Oyun(
+      gameId: json["gameID"],
       rakipAdi: json["rivalName"],
       kendiPuani: json["yourScore"],
       rakipPuani: json["rivalScore"],
@@ -65,5 +69,24 @@ class CompleteGameViewModel extends BaseViewModel {
       print("API hatası: $e");
     }
     notifyListeners();
+  }
+
+  Future<GameResultModel?> fetchGameResult(int gameId) async {
+    final url = Uri.parse(
+        "http://192.168.1.178:7109/api/Game/oyun-sonuc?gameId=$gameId");
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        final userId = _userService.userId ?? 0;
+        return GameResultModel.fromJson(data, userId);
+      } else {
+        print("Hata: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("API hatası: $e");
+    }
+    return null;
   }
 }

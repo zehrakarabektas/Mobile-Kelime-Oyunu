@@ -7,6 +7,7 @@ import 'package:stacked_services/stacked_services.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/app/app.router.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/app/app.locator.dart';
 import 'package:yazlab2proje2kelimeoyunumobil/services/game_service.dart';
+import 'package:yazlab2proje2kelimeoyunumobil/ui/dialogs/info_alert/result_game.dart';
 import '../../../services/user_service.dart';
 import '../../../services/word_service.dart';
 import 'package:signalr_netcore/signalr_client.dart';
@@ -60,7 +61,10 @@ class GameBoardViewModel extends BaseViewModel {
   final _navigationService = locator<NavigationService>();
   final _userService = locator<UserService>();
   final _gameService = locator<GameService>();
+  GameResultModel? _gameResult;
   late HubConnection _hubConnect;
+  bool GameResultPopup = false;
+  bool popupShown = false;
 
   Future<void> initSignalR() async {
     _hubConnect = HubConnectionBuilder()
@@ -74,6 +78,7 @@ class GameBoardViewModel extends BaseViewModel {
       if (turnUserId == userId && _gameService.winnerGamerId == null) {
         startTimer();
       }
+
       notifyListeners();
     });
 
@@ -85,20 +90,23 @@ class GameBoardViewModel extends BaseViewModel {
       print(message);
       notifyListeners();
     });
-    _hubConnect.on("GameSurrendered", (args) {
+    /* _hubConnect.on("GameSurrendered", (args) async {
       if (args != null && args.isNotEmpty && args[0] is Map<String, dynamic>) {
         final data = args[0] as Map<String, dynamic>;
         final winnerId = data['winnerGamerId'] as int;
 
         handleGameSurrendered(winnerId);
+
+        
       }
-    });
+    });*/
 
     await _hubConnect.start();
   }
 
   Future<void> fetchGameData() async {
     final gameId = _gameService.gameId;
+    yanKelimelerdenGelenSkor = 0;
     try {
       final urlGameInfo = Uri.parse(
           'http://192.168.1.178:7109/api/Game/game/$gameId?ts=${DateTime.now().millisecondsSinceEpoch}');
@@ -134,7 +142,14 @@ class GameBoardViewModel extends BaseViewModel {
           BolgeYasagiActive: gameData['isRegionBanActive'] ?? false,
           HarfYasagiActive: gameData['isLetterBanActive'] ?? false,
         );
+        if (gameData['winnerGamerId'] != null|| gameData['isDraw']!=null ) {
+          GameResultPopup = true;
+          _timer?.cancel();
+          _timer = null;
+          notifyListeners();
+        }
       }
+
       initializeBoard();
       gamesLettersToBoard();
       await fetchGamerLetters();
@@ -533,9 +548,12 @@ class GameBoardViewModel extends BaseViewModel {
       _wordService.getUserFullWord(placedLetters, board);
   bool isPlacedWordValid() =>
       _wordService.WordListedeVarMi(getUserCreateWord());
-  int gamerBonusScore() =>
-      _wordService.gamerBonusScore(placedLetters, bonusMatrix);
-  int gamerFullWordScore() => _wordService.fullWordScore(
+  int gamerWordScore() => _wordService.fullWordScore(
+        placedLetters: placedLetters,
+        board: board,
+        letterPoints: letterPoints,
+      );
+  int gamerFullWordScore() => _wordService.fullWordBonusScore(
         placedLetters: placedLetters,
         board: board,
         bonusMatrix: bonusMatrix,
@@ -545,7 +563,7 @@ class GameBoardViewModel extends BaseViewModel {
   bool isFirstGamerMove() => _wordService.isFirstWord(_gameService.gameCell);
   bool isCorrectPlaced() =>
       _wordService.isCorrectPlaced(placeLetterList, board);
-
+  int yanKelimelerdenGelenSkor = 0;
   void updatePlacedLetterColors() {
     for (var row in board) {
       for (var cell in row) {
@@ -576,17 +594,22 @@ class GameBoardViewModel extends BaseViewModel {
     bool tumKomsuWordsKontrol = komsuWords.every(
       (item) => _wordService.WordListedeVarMi(item['word']),
     );
-
+    yanKelimelerdenGelenSkor = 0;
     for (var k in komsuWords) {
       final word = k['word'];
       final score = k['score'];
       final isCrossValid = _wordService.WordListedeVarMi(word);
+      if (isCrossValid) {
+        final int score = (k['score'] as num).toInt();
+        yanKelimelerdenGelenSkor += score;
+      }
       print(
         "- Komşu kelime: '$word' → ${isCrossValid ? "+ Geçerli" : "x Geçersiz"} | Skor: $score",
       );
     }
-    print("+ Koyulan harflerin skoru: ${gamerBonusScore()}");
+    print("+ Kelime bonussuz skor: ${gamerWordScore()}");
     print("+ Toplam kelime skoru: ${gamerFullWordScore()}");
+    print("+ Komşu kelime toplam skor: $yanKelimelerdenGelenSkor");
     final isAccepted = (isFirstMove && isWord && isStar && birlesik) ||
         (!isFirstMove &&
             isWord &&
@@ -627,7 +650,7 @@ class GameBoardViewModel extends BaseViewModel {
     final userId = _userService.userId!;
     final gameId = int.parse(_gameService.gameId!);
 
-    final wordScore = placedLetters.fold(0, (sum, l) => sum + l.score);
+    final wordScore = gamerWordScore();
     final bonusScore = gamerFullWordScore();
     final placedSnapshot = List.from(placedLetters);
     final jokerUpdateTasks = <Future>[];
@@ -659,6 +682,7 @@ class GameBoardViewModel extends BaseViewModel {
       "userId": userId,
       "wordScore": wordScore,
       "bonusWordScore": bonusScore,
+      "neighWordScore": yanKelimelerdenGelenSkor,
       "letters": placedLetters
           .map((l) => {
                 "row": l.row,
@@ -670,10 +694,9 @@ class GameBoardViewModel extends BaseViewModel {
       "bolgeYasagiActive": selectedBonuses.contains("bolgeYasagi"),
       "ekstraHamleActive": selectedBonuses.contains("ekstraHamle"),
     };
-
     try {
       final success = await _wordService.sendWord(payload);
-
+      debugPrint(jsonEncode(payload));
       if (success) {
         debugPrint("+ Kelime başarıyla gönderildi!");
 
@@ -882,5 +905,25 @@ class GameBoardViewModel extends BaseViewModel {
         ],
       ),
     );
+  }
+
+  Future<GameResultModel?> fetchGameResult() async {
+    final gameId = _gameService.gameId;
+    final userId = _userService.userId;
+    final url = Uri.parse(
+        "http://192.168.1.178:7109/api/Game/oyun-sonuc?gameId=$gameId");
+
+    try {
+      final response = await http.get(url);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return GameResultModel.fromJson(data, userId!);
+      } else {
+        print("Hata: ${response.statusCode}");
+      }
+    } catch (e) {
+      print("API hatası: $e");
+    }
+    return null;
   }
 }
