@@ -5,7 +5,6 @@ import 'package:yazlab2proje2kelimeoyunumobil/services/letter_list_service.dart'
 import '../ui/views/game_board/game_board_viewmodel.dart';
 
 class WordService {
-  final _letterListService = LetterListService();
   Future<bool> sendWord(Map<String, dynamic> payload) async {
     final url = Uri.parse("http://192.168.1.178:7109/api/Game/kelime-gonder");
 
@@ -160,7 +159,6 @@ class WordService {
 
     if (!x && !y && !z) return false;
 
-    int way = x ? placedLetters[0].row : placedLetters[0].col;
     List<int> indexes = placedLetters.map((e) => x ? e.col : e.row).toList();
     indexes.sort();
 
@@ -190,16 +188,8 @@ class WordService {
   }
 
   bool WordListedeVarMi(String word) {
-    if (!word.contains('JOKER')) {
-      return word.length >= 1 && _letterListService.isWord(word);
-    }
-    final kombinasyonlar = jokerWord(word);
-    for (var alternatif in kombinasyonlar) {
-      if (_letterListService.isWord(alternatif)) {
-        return true;
-      }
-    }
-    return false;
+    word.toLowerCase();
+    return word.length >= 1 && LetterListService().isWord(word);
   }
 
   int fullWordScore({
@@ -241,15 +231,22 @@ class WordService {
 
     for (int i = start; i <= end; i++) {
       final cell = isRow ? board[fixed][i] : board[i][fixed];
-      final letter = cell.letter;
-      final score = letterPoints[letter.toUpperCase()] ?? 0;
 
-      bool isNew =
-          placedLetters.any((p) => p.row == cell.row && p.col == cell.col);
-      int bonus = bonusMatrix[cell.row][cell.col];
+      UserPlayLetter? placed;
+      for (var p in placedLetters) {
+        if (p.row == cell.row && p.col == cell.col) {
+          placed = p;
+          break;
+        }
+      }
 
+      final letter = placed?.letter ?? cell.letter;
+      final score = placed?.score ?? (letterPoints[letter.toUpperCase()] ?? 0);
+
+      final bonus = bonusMatrix[cell.row][cell.col];
       int letterScore = score;
-      if (isNew) {
+
+      if (placed != null) {
         if (bonus == 2) letterScore *= 2;
         if (bonus == 3) letterScore *= 3;
         if (bonus == 4) wordMultiplier *= 2;
@@ -308,7 +305,7 @@ class WordService {
         const Offset(-1, 0),
         const Offset(1, 0),
         const Offset(0, 1),
-        const Offset(1, 1), 
+        const Offset(1, 1),
       ];
 
       for (var w in ways) {
@@ -333,29 +330,79 @@ class WordService {
     return false;
   }
 
-  List<String> jokerWord(String kelime) {
-    const alfabe = 'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ';
-    List<String> sonuc = [];
+  Future<bool> updateJokerLetter(Map<String, dynamic> data) async {
+    debugPrint(jsonEncode(data));
+    final response = await http.post(
+      Uri.parse('http://192.168.1.178:7109/api/Game/jokerHarfi-guncelle'),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(data),
+    );
 
-    void olustur(String suanki, int index) {
-      if (index >= kelime.length) {
-        print("✅ Alternatif kelime: $suanki");
-        sonuc.add(suanki);
-        return;
+    debugPrint("Status Code: ${response.statusCode}");
+
+    return response.statusCode == 200;
+  }
+
+  List<Map<String, dynamic>> getNeighWords(
+    List<UserPlayLetter> placedLetters,
+    List<List<Cell>> board,
+    String mainWord,
+    Map<String, int> letterPoints,
+  ) {
+    Set<String> addedWords = {};
+    List<Map<String, dynamic>> neighborWords = [];
+
+    for (var placed in placedLetters) {
+      int row = placed.row;
+      int col = placed.col;
+
+      int sol = col, sag = col;
+      while (sol > 0 && board[row][sol - 1].letter.isNotEmpty) {
+        sol--;
+      }
+      while (sag < 14 && board[row][sag + 1].letter.isNotEmpty) {
+        sag++;
       }
 
-      String parca = kelime.substring(index);
-      if (parca.startsWith("JOKER")) {
-        for (var harf in alfabe.split('')) {
-          print("🔁 JOKER yerine '$harf' deniyoruz...");
-          olustur(suanki + harf, index + 5);
+      if (sag - sol >= 1) {
+        String word = "";
+        int score = 0;
+        for (int i = sol; i <= sag; i++) {
+          final ch = (row == placed.row && i == placed.col)
+              ? placed.letter
+              : board[row][i].letter;
+          word += ch;
+          score += letterPoints[ch.toUpperCase()] ?? 0;
         }
-      } else {
-        olustur(suanki + kelime[index], index + 1);
+        if (word.length > 1 && word != mainWord && !addedWords.contains(word)) {
+          addedWords.add(word);
+          neighborWords.add({"word": word, "score": score});
+        }
+      }
+
+      int yukari = row, asagi = row;
+      while (yukari > 0 && board[yukari - 1][col].letter.isNotEmpty) {
+        yukari--;
+      }
+      while (asagi < 14 && board[asagi + 1][col].letter.isNotEmpty) {
+        asagi++;
+      }
+
+      if (asagi - yukari >= 1) {
+        String word = "";
+        int score = 0;
+        for (int i = yukari; i <= asagi; i++) {
+          final ch = (i == placed.row) ? placed.letter : board[i][col].letter;
+          word += ch;
+          score += letterPoints[ch.toUpperCase()] ?? 0;
+        }
+        if (word.length > 1 && word != mainWord && !addedWords.contains(word)) {
+          addedWords.add(word);
+          neighborWords.add({"word": word, "score": score});
+        }
       }
     }
 
-    olustur('', 0);
-    return sonuc;
+    return neighborWords;
   }
 }

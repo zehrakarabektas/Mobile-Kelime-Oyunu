@@ -89,6 +89,9 @@ class ActiveGameViewModel extends BaseViewModel {
               DateTime.now().toUtc(),
           winnerGamerId: gameData['winnerGamerId'],
           isDraw: gameData['isDraw'] ?? false,
+          EkstraHamleActive: gameData['isExtraTurnActive'] ?? false,
+          BolgeYasagiActive: gameData['isRegionBanActive'] ?? false,
+          HarfYasagiActive: gameData['isLetterBanActive'] ?? false,
         );
 
         print("✅ Oyun verileri başarıyla çekildi ve set edildi.");

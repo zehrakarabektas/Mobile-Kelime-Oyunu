@@ -26,6 +26,9 @@ class GameService with ListenableServiceMixin {
   int gameSeconds = 0;
   int? winnerGamerId;
   bool isDraw = false;
+  bool EkstraHamleActive = false;
+  bool BolgeYasagiActive = false;
+  bool HarfYasagiActive = false;
 
   void setGame({
     required String gameId,
@@ -46,6 +49,9 @@ class GameService with ListenableServiceMixin {
     required int gameSeconds,
     int? winnerGamerId,
     bool isDraw = false,
+    required bool EkstraHamleActive,
+    required bool BolgeYasagiActive,
+    required bool HarfYasagiActive,
   }) {
     this.gameId = gameId;
     this.gamer1Id = gamer1Id;
@@ -65,12 +71,15 @@ class GameService with ListenableServiceMixin {
     this.serverNow = serverNow;
     this.winnerGamerId = winnerGamerId;
     this.isDraw = isDraw;
+    this.EkstraHamleActive = EkstraHamleActive;
+    this.BolgeYasagiActive = BolgeYasagiActive;
+    this.HarfYasagiActive = HarfYasagiActive;
 
     notifyListeners();
   }
 
-  void setGameId(int id) {
-    gameId = id.toString();
+  void setGameId(String id) {
+    gameId = id;
     notifyListeners();
   }
 
@@ -97,6 +106,9 @@ class GameService with ListenableServiceMixin {
       gameSeconds: game['gameSeconds'] ?? 0,
       winnerGamerId: game['winnerGamerId'],
       isDraw: game['isDraw'] ?? false,
+      EkstraHamleActive: game["isExtraTurnActive"] ?? false,
+      BolgeYasagiActive: game["isRegionBanActive"] ?? false,
+      HarfYasagiActive: game["isLetterBanActive"] ?? false,
     );
   }
 
@@ -122,6 +134,9 @@ class GameService with ListenableServiceMixin {
     lastMoveTime = null;
     winnerGamerId = null;
     isDraw = false;
+    EkstraHamleActive = false;
+    BolgeYasagiActive = false;
+    HarfYasagiActive = false;
 
     notifyListeners();
   }
@@ -142,7 +157,7 @@ class GameService with ListenableServiceMixin {
     final now = serverNow ?? DateTime.now().toUtc();
     final lastTime = now.difference(lastMoveTime!);
     final remaining = Duration(seconds: gameSeconds) - lastTime;
-    /*print("server:$serverNow");
+   /* print("server:$serverNow");
     print("last:$lastMoveTime");
     print("start:$startTime");
     print("now: $now");
@@ -169,8 +184,6 @@ class GameService with ListenableServiceMixin {
       final sStr = seconds.toString().padLeft(2, '0');
       formatted = "$mStr:$sStr";
     }
-
-    // print("leftTimeString: $formatted");
     return formatted;
   }
 

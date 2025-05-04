@@ -58,7 +58,6 @@ class UserPlayLetter {
 
 class GameBoardViewModel extends BaseViewModel {
   final _navigationService = locator<NavigationService>();
-  //final _letterListService = LetterListService();
   final _userService = locator<UserService>();
   final _gameService = locator<GameService>();
   late HubConnection _hubConnect;
@@ -131,6 +130,9 @@ class GameBoardViewModel extends BaseViewModel {
               DateTime.tryParse(gameData['serverNow'] ?? "") ?? DateTime.now(),
           winnerGamerId: gameData['winnerGamerId'],
           isDraw: gameData['isDraw'] ?? false,
+          EkstraHamleActive: gameData['isExtraTurnActive'] ?? false,
+          BolgeYasagiActive: gameData['isRegionBanActive'] ?? false,
+          HarfYasagiActive: gameData['isLetterBanActive'] ?? false,
         );
       }
       initializeBoard();
@@ -215,8 +217,14 @@ class GameBoardViewModel extends BaseViewModel {
 
   void placeLetter(int row, int col, String letter, int score, int letterId) {
     if (board[row][col].isClosed) {
-      debugPrint("❌ Bu hücre kilitli, harf yerleştirilemez.");
+      debugPrint("X Bu hücre kilitli, harf yerleştirilemez.");
       return;
+    }
+    if (_gameService.BolgeYasagiActive && userId == _gameService.turnGamerId) {
+      if (col < 8) {
+        debugPrint("🚫 Bu alan bölge yasağı nedeniyle kapalı ($row, $col).");
+        return;
+      }
     }
 
     placedLetters.removeWhere((p) => p.row == row && p.col == col);
@@ -242,14 +250,10 @@ class GameBoardViewModel extends BaseViewModel {
       letterId: letterId,
     ));
     updatePlacedLetterColors();
-    /*final word = getUserCreateWord();
-    final isValid = isPlacedWordValid();
-    debugPrint("🧩 Yeni kelime: $word");
-    debugPrint("✅ Geçerli mi: $isValid");*/
 
     for (var l in placedLetters) {
       debugPrint(
-          "📍 Harf: ${l.letter} (${l.row}, ${l.col}) → Puan: ${l.score}, ID: ${l.letterId}");
+          "--> Harf: ${l.letter} (${l.row}, ${l.col}) → Puan: ${l.score}, ID: ${l.letterId}");
     }
 
     notifyListeners();
@@ -270,17 +274,12 @@ class GameBoardViewModel extends BaseViewModel {
       usedLetterIndexes.remove(removedId);
     }
 
-    debugPrint("❌ Harf silindi ($row, $col)");
-    debugPrint("📍 Kalan harfler:");
+    debugPrint("x Harf silindi ($row, $col)");
+    debugPrint("--> Kalan harfler:");
     for (var l in placedLetters) {
       debugPrint("➡️ ${l.letter} at (${l.row}, ${l.col}) → ID: ${l.letterId}");
     }
     updatePlacedLetterColors();
-    /*final word = getUserCreateWord();
-    final isValid = isPlacedWordValid();
-    debugPrint("🧩 Yeni kelime: $word");
-    debugPrint("✅ Geçerli mi: $isValid");*/
-
     notifyListeners();
   }
 
@@ -349,6 +348,19 @@ class GameBoardViewModel extends BaseViewModel {
                   'score': e['score'],
                 })
             .toList();
+        if (_gameService.HarfYasagiActive &&
+            _gameService.turnGamerId == _userService.userId) {
+          final total = letterObjects.length;
+          if (total >= 2) {
+            final indexes = List.generate(total, (i) => i)..shuffle();
+            harfYasagi = indexes.take(2).toSet();
+          } else {
+            harfYasagi = {};
+          }
+        } else {
+          harfYasagi = {};
+        }
+
         letterSlot = List<int?>.generate(
             letterObjects.length, (index) => letterObjects[index]['letterId']);
 
@@ -469,6 +481,10 @@ class GameBoardViewModel extends BaseViewModel {
       isGamer1 ? _gameService.gamer1PassCount : _gameService.gamer2PassCount;
   String get leftTimeString => _gameService.leftTimeString;
   int? get turnUserId => _gameService.turnGamerId;
+  bool get BolgeYasagiActive => _gameService.BolgeYasagiActive;
+  Set<int> harfYasagi = {};
+  final Map<int, String> jokerOverrides = {};
+
   Map<String, int> aktifOdulSay = {
     'ekstraHamle': 0,
     'bolgeYasagi': 0,
@@ -540,28 +556,47 @@ class GameBoardViewModel extends BaseViewModel {
       }
     }
 
-    final isMiddleOk =
+    final isStar =
         _wordService.isMiddleCell(_gameService.gameCell, placeLetterList);
     final isCorrect = isCorrectPlaced();
     final fullWord = _wordService.getUserFullWord(placedLetters, board);
-    final isValid = _wordService.WordListedeVarMi(fullWord);
+    final isWord = _wordService.WordListedeVarMi(fullWord);
     final birlesik = _wordService.WorddeBoslukVarMi(placedLetters, board);
     final isFirstMove = isFirstGamerMove();
 
-    print("🔍 Kelime: $fullWord");
-    print("📌 isValid (sözlükte var mı): $isValid");
-    print("📌 isCorrect (bağlantılı mı): $isCorrect");
-    print("📌 isMiddleOk (yıldızda mı): $isMiddleOk");
-    print("📌 Birleşik mi harfler: $birlesik");
-    print("📌 isFirstMove: $isFirstMove");
-    print("✅ Koyulan harflerin skoru: ${gamerBonusScore()}");
-    print("✅ Toplam kelime skoru: ${gamerFullWordScore()}");
+    print("- Kelime: $fullWord");
+    print("- Txt de var mı : $isWord");
+    print("- Bir harfe bağlı mı : $isCorrect");
+    print("- İlk kelime mi: $isFirstMove");
+    print("- İlk kelime ise yıldızda mı : $isStar");
+    print("- Birleşik mi harfler : $birlesik");
+    final komsuWords = _wordService.getNeighWords(
+        placedLetters, board, fullWord, letterPoints);
 
-    final isAccepted = (isFirstMove && isValid && isMiddleOk && birlesik) ||
-        (!isFirstMove && isValid && isCorrect && birlesik);
+    bool tumKomsuWordsKontrol = komsuWords.every(
+      (item) => _wordService.WordListedeVarMi(item['word']),
+    );
+
+    for (var k in komsuWords) {
+      final word = k['word'];
+      final score = k['score'];
+      final isCrossValid = _wordService.WordListedeVarMi(word);
+      print(
+        "- Komşu kelime: '$word' → ${isCrossValid ? "+ Geçerli" : "x Geçersiz"} | Skor: $score",
+      );
+    }
+    print("+ Koyulan harflerin skoru: ${gamerBonusScore()}");
+    print("+ Toplam kelime skoru: ${gamerFullWordScore()}");
+    final isAccepted = (isFirstMove && isWord && isStar && birlesik) ||
+        (!isFirstMove &&
+            isWord &&
+            isCorrect &&
+            birlesik &&
+            tumKomsuWordsKontrol);
 
     isSendWordTrue = isAccepted;
-    print("✅ Kabul Edildi mi: $isAccepted");
+    print("++ Kabul Edildi mi: $isAccepted");
+    print("");
 
     if (isAccepted) {
       for (int i = 0; i < placedLetters.length; i++) {
@@ -581,7 +616,7 @@ class GameBoardViewModel extends BaseViewModel {
   bool isSendWordGamer = false;
   Future<void> sendWordButton() async {
     if (!isSendWordTrue) {
-      debugPrint("❌ Kelime kabul edilmediği için gönderilmiyor.");
+      debugPrint("x Kelime kabul edilmediği için gönderilmiyor.");
       return;
     }
 
@@ -594,7 +629,31 @@ class GameBoardViewModel extends BaseViewModel {
 
     final wordScore = placedLetters.fold(0, (sum, l) => sum + l.score);
     final bonusScore = gamerFullWordScore();
+    final placedSnapshot = List.from(placedLetters);
+    final jokerUpdateTasks = <Future>[];
 
+    for (var letter in placedSnapshot) {
+      if (letter.score == 0 && jokerOverrides.containsKey(letter.letterId)) {
+        final newChar = jokerOverrides[letter.letterId];
+        jokerUpdateTasks.add(
+          _wordService.updateJokerLetter({
+            "gameId": gameId,
+            "userId": userId,
+            "letterId": letter.letterId,
+            "newChar": newChar,
+          }).then((_) {
+            debugPrint(
+                "Joker harf güncellendi: ID ${letter.letterId} -> $newChar");
+          }),
+        );
+      }
+    }
+
+    await Future.wait(jokerUpdateTasks);
+
+    for (var l in placedSnapshot) {
+      board[l.row][l.col].isClosed = true;
+    }
     final payload = {
       "gameId": gameId,
       "userId": userId,
@@ -607,23 +666,25 @@ class GameBoardViewModel extends BaseViewModel {
                 "letterId": l.letterId,
               })
           .toList(),
+      "harfYasagiActive": selectedBonuses.contains("harfYasagi"),
+      "bolgeYasagiActive": selectedBonuses.contains("bolgeYasagi"),
+      "ekstraHamleActive": selectedBonuses.contains("ekstraHamle"),
     };
 
     try {
       final success = await _wordService.sendWord(payload);
 
       if (success) {
-        debugPrint("✅ Kelime başarıyla gönderildi!");
-        for (var l in placedLetters) {
-          board[l.row][l.col].isClosed = true;
-        }
+        debugPrint("+ Kelime başarıyla gönderildi!");
+
         placedLetters.clear();
         placeLetterList.clear();
+        selectedBonuses.clear();
       } else {
-        debugPrint("Kelime gönderme başarısız (response false)");
+        debugPrint("x Kelime gönderme başarısız (response false)");
       }
     } catch (e) {
-      debugPrint("Kelime gönderme hatası: $e");
+      debugPrint("x Kelime gönderme hatası: $e");
     } finally {
       isSendWordGamer = false;
       notifyListeners();
@@ -646,7 +707,7 @@ class GameBoardViewModel extends BaseViewModel {
       );
 
       if (response.statusCode == 200) {
-        debugPrint("🛑 Oyun zaman aşımı ile bitti: ${response.body}");
+        debugPrint("Oyun zaman aşımı ile bitti: ${response.body}");
         gameOver = true;
         gameOverMessage = "Süre doldu. Oyun sona erdi.";
         notifyListeners();
@@ -690,5 +751,136 @@ class GameBoardViewModel extends BaseViewModel {
       board[row][col].isClosed = true;
       board[row][col].isWord = false;
     }
+  }
+
+  Set<String> selectedBonuses = {};
+
+  void UserSelectBonus(String type) {
+    if (selectedBonuses.contains(type)) {
+      selectedBonuses.remove(type);
+    } else {
+      selectedBonuses.add(type);
+    }
+    notifyListeners();
+  }
+
+  bool isBonusSelected(String type) => selectedBonuses.contains(type);
+
+  Future<String?> selectJokerLetter(BuildContext context) async {
+    final letters = [
+      'A',
+      'B',
+      'C',
+      'Ç',
+      'D',
+      'E',
+      'F',
+      'G',
+      'Ğ',
+      'H',
+      'I',
+      'İ',
+      'J',
+      'K',
+      'L',
+      'M',
+      'N',
+      'O',
+      'Ö',
+      'P',
+      'R',
+      'S',
+      'Ş',
+      'T',
+      'U',
+      'Ü',
+      'V',
+      'Y',
+      'Z'
+    ];
+
+    return showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Joker harfini seç'),
+              Image.asset(
+                'lib/assets/images/joker.png',
+                width: 36,
+                height: 36,
+              ),
+            ],
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: letters.map((char) {
+                return GestureDetector(
+                  onTap: () => Navigator.of(context).pop(char),
+                  child: SizedBox(
+                    width: 50,
+                    height: 50,
+                    child: buildJokerSelectionTile(char),
+                  ),
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget buildJokerSelectionTile(String letter) {
+    return Container(
+      width: 50,
+      height: 50,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(10),
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFF5E8D3),
+            Color(0xFFE0C8A7),
+            Color(0xFFB88B5B),
+            Color(0xFF7A5C3E),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          stops: [0.0, 0.35, 0.7, 1.0],
+        ),
+        border: Border.all(color: Color(0xFF5C3B26), width: 1.2),
+      ),
+      child: Stack(
+        children: [
+          Center(
+            child: Text(
+              letter,
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ),
+          const Positioned(
+            top: 3,
+            right: 6,
+            child: Text(
+              "0",
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w900,
+                color: Color.fromARGB(255, 182, 0, 0),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
