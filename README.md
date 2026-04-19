@@ -47,20 +47,32 @@ Sistem, veri bütünlüğünü ve hızı optimize etmek amacıyla ilişkisel bir
     * **Puan Bölünmesi:** Mevcut skoru belirli bir oranda azaltır.
   
 ## 📱 Uygulama Ekran Görüntüleri
-<table>
-  <tr>
-    <td><img src="app_pictures/app_first_screen.jpeg" width="200"><br align="center">Açılış</td>
-    <td><img src="app_pictures/app_login_screen.jpeg" width="200"><br align="center">Giriş Yap</td>
-    <td><img src="app_pictures/app_register_screen.jpeg" width="200"><br align="center">Kayıt Ol</td>
-  </tr>
-  <tr>
-    <td><img src="app_pictures/game_start_screen.jpeg" width="200"><br align="center">Oyun Başlangıç</td>
-    <td><img src="app_pictures/game_play_screen.jpeg" width="200"><br align="center">Oyun Alanı</td>
-    <td><img src="app_pictures/game_playing_screen.jpeg" width="200"><br align="center">Oyun Sırasında</td>
-  </tr>
-  <tr>
-    <td><img src="app_pictures/new_play_screen.jpeg" width="200"><br align="center">Yeni Oyun</td>
-    <td><img src="app_pictures/new_play_select_time_screen.jpeg" width="200"><br align="center">Süre Seçimi</td>
-    <td><img src="app_pictures/play_result_screen.jpeg" width="200"><br align="center">Sonuç Ekranı</td>
-  </tr>
-</table>
+<details>
+  <summary><b>🔐 Giriş ve Kayıt Ekranları (Genişletmek için tıkla)</b></summary>
+  <p align="center">
+    <img src="app_pictures/app_first_screen.jpeg" width="30%" alt="Açılış">
+    <img src="app_pictures/app_login_screen.jpeg" width="30%" alt="Giriş">
+    <img src="app_pictures/app_register_screen.jpeg" width="30%" alt="Kayıt">
+  </p>
+</details>
+
+<details>
+  <summary><b>🎮 Oyun Deneyimi ve Modlar</b></summary>
+  <p align="center">
+    <img src="app_pictures/game_start_screen.jpeg" width="30%" alt="Başlangıç">
+    <img src="app_pictures/new_play_select_time_screen.jpeg" width="30%" alt="Süre Seçimi">
+    <img src="app_pictures/new_play_screen.jpeg" width="30%" alt="Yeni Oyun">
+  </p>
+  <p align="center">
+    <img src="app_pictures/game_play_screen.jpeg" width="30%" alt="Oyun Alanı">
+    <img src="app_pictures/game_playing_screen.jpeg" width="30%" alt="Oyun Akışı">
+    <img src="app_pictures/play_result_screen.jpeg" width="30%" alt="Sonuç">
+  </p>
+</details>
+
+<details>
+  <summary><b>👤 Kullanıcı Profili</b></summary>
+  <p align="center">
+    <img src="app_pictures/app_profile.jpeg" width="32%" alt="Profil">
+  </p>
+</details>
