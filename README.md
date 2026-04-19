@@ -45,3 +45,22 @@ Sistem, veri bütünlüğünü ve hızı optimize etmek amacıyla ilişkisel bir
     * **Puan Transferi:** Oyuncunun puanını rakibine aktarır.
     * **Harf Kaybı:** Oyuncunun elindeki harfleri rastgele yenileriyle değiştirir.
     * **Puan Bölünmesi:** Mevcut skoru belirli bir oranda azaltır.
+  
+## 📱 Uygulama Ekran Görüntüleri
+<table>
+  <tr>
+    <td><img src="app_pictures/app_first_screen.jpeg" width="200"><br align="center">Açılış</td>
+    <td><img src="app_pictures/app_login_screen.jpeg" width="200"><br align="center">Giriş Yap</td>
+    <td><img src="app_pictures/app_register_screen.jpeg" width="200"><br align="center">Kayıt Ol</td>
+  </tr>
+  <tr>
+    <td><img src="app_pictures/game_start_screen.jpeg" width="200"><br align="center">Oyun Başlangıç</td>
+    <td><img src="app_pictures/game_play_screen.jpeg" width="200"><br align="center">Oyun Alanı</td>
+    <td><img src="app_pictures/game_playing_screen.jpeg" width="200"><br align="center">Oyun Sırasında</td>
+  </tr>
+  <tr>
+    <td><img src="app_pictures/new_play_screen.jpeg" width="200"><br align="center">Yeni Oyun</td>
+    <td><img src="app_pictures/new_play_select_time_screen.jpeg" width="200"><br align="center">Süre Seçimi</td>
+    <td><img src="app_pictures/play_result_screen.jpeg" width="200"><br align="center">Sonuç Ekranı</td>
+  </tr>
+</table>
