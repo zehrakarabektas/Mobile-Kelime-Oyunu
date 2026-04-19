@@ -46,33 +46,40 @@ Sistem, veri bütünlüğünü ve hızı optimize etmek amacıyla ilişkisel bir
     * **Harf Kaybı:** Oyuncunun elindeki harfleri rastgele yenileriyle değiştirir.
     * **Puan Bölünmesi:** Mevcut skoru belirli bir oranda azaltır.
   
-## 📱 Uygulama Ekran Görüntüleri
-<details>
-  <summary><b>🔐 Giriş ve Kayıt Ekranları (Genişletmek için tıkla)</b></summary>
-  <p align="center">
-    <img src="app_pictures/app_first_screen.jpeg" width="30%" alt="Açılış">
-    <img src="app_pictures/app_login_screen.jpeg" width="30%" alt="Giriş">
-    <img src="app_pictures/app_register_screen.jpeg" width="30%" alt="Kayıt">
-  </p>
-</details>
+---
 
-<details>
-  <summary><b>🎮 Oyun Deneyimi ve Modlar</b></summary>
-  <p align="center">
-    <img src="app_pictures/game_start_screen.jpeg" width="30%" alt="Başlangıç">
-    <img src="app_pictures/new_play_select_time_screen.jpeg" width="30%" alt="Süre Seçimi">
-    <img src="app_pictures/new_play_screen.jpeg" width="30%" alt="Yeni Oyun">
-  </p>
-  <p align="center">
-    <img src="app_pictures/game_play_screen.jpeg" width="30%" alt="Oyun Alanı">
-    <img src="app_pictures/game_playing_screen.jpeg" width="30%" alt="Oyun Akışı">
-    <img src="app_pictures/play_result_screen.jpeg" width="30%" alt="Sonuç">
-  </p>
-</details>
+## 📸 Uygulama Ekran Görüntüleri
 
-<details>
-  <summary><b>👤 Kullanıcı Profili</b></summary>
-  <p align="center">
-    <img src="app_pictures/app_profile.jpeg" width="32%" alt="Profil">
-  </p>
-</details>
+### 🔐 Giriş ve Profil Akışı
+*Uygulamanın karşılama, güvenli giriş/kayıt ve kullanıcı profil yönetimi ekranları.*
+
+<p align="center">
+  <img src="app_pictures/app_first_screen.jpeg" width="24%" />
+  <img src="app_pictures/app_login_screen.jpeg" width="24%" />
+  <img src="app_pictures/app_register_screen.jpeg" width="24%" />
+  <img src="app_pictures/app_profile.jpeg" width="24%" />
+</p>
+
+---
+
+### 🎮 Oyun Deneyimi ve Mekanikler
+*Oyun başlangıç menüsü, süre seçim ekranları ve aktif oyun süreci.*
+
+<p align="center">
+  <img src="app_pictures/new_play_screen.jpeg" width="32%" />
+  <img src="app_pictures/new_play_select_time_screen.jpeg" width="32%" />
+  <img src="app_pictures/game_start_screen.jpeg" width="32%" />
+</p>
+
+<br>
+
+### 🕹️ Oyun Akışı ve Sonuç
+*Aktif oyun alanı ve oyun sonu skor tablosu.*
+
+<p align="center">
+  <img src="app_pictures/game_play_screen.jpeg" width="32%" />
+  <img src="app_pictures/game_playing_screen.jpeg" width="32%" />
+  <img src="app_pictures/play_result_screen.jpeg" width="32%" />
+</p>
+
+---
